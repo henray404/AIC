@@ -197,10 +197,19 @@ foto -> gemma3:4b -> fakta yang terlihat
 ```
 
 ```powershell
+# sekali saja: turunkan profil gaya per platform + kamus merek dari katalog
+python scripts/build_platform_profiles.py
+python scripts/build_lexicon.py
+
 python scripts/probe_vlm_baseline.py --model gemma3:4b --n 100   # ukur model dasar
-python scripts/retrieve_pipeline.py --n 20                       # pipeline penuh
+python scripts/retrieve_pipeline.py --n 20 --platform all        # satu foto, tiga lapak
 python scripts/retrieve_pipeline.py --hanya-cari "sunscreen tube biru"
+python scripts/eval_listing.py data_drive/eval/A.jsonl data_drive/eval/B.jsonl
 ```
+
+Tiap perbaikan bisa dimatikan sendiri untuk diukur efeknya: `--tanpa-harga-hitung`,
+`--tanpa-saring-merek`, `--tanpa-contoh-pola`, dan `--panjangkan` untuk menyalakan
+pemanjangan judul. Rinciannya di **[docs/OPTIMASI.md](docs/OPTIMASI.md)**.
 
 Datasetnya dipakai **saat model bekerja** — sebagai katalog rujukan untuk merek,
 istilah, dan harga — bukan dilebur jadi bobot lewat fine-tune.
