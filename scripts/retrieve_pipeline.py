@@ -266,6 +266,43 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
     return " ".join(simpan).strip(" -/&,"), dibuang
 
 
+def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
+                     plat: str | None, lex: dict) -> tuple[str, list[str]]:
+    """Tambahkan kata kunci pendukung sampai judul mencapai panjang lazim platform.
+
+    Tokopedia median 15 kata, tapi model 4B/7B tetap menulis 6 kata betapapun
+    dimintanya — tiga putaran prompt tidak menggesernya. Jadi dikerjakan di luar
+    model: kata diambil dari judul produk kembar di katalog, yang menurut definisi
+    sudah didukung bukti, jadi tidak menambah risiko halusinasi.
+    """
+    if not plat or tetangga is None or not len(tetangga):
+        return judul, []
+    target = profil.get(plat, {}).get("judul", {}).get("target_kata")
+    if not target:
+        return judul, []
+    lo = target[0]
+    ada = set(token(judul))
+    if len(judul.split()) >= lo:
+        return judul, []
+
+    # kata yang muncul di >=2 produk kembar; merek unik tersaring sendiri
+    hitung: dict[str, int] = defaultdict(int)
+    for t in tetangga["title_bersih"]:
+        for w in set(token(t)):
+            hitung[w] += 1
+    kandidat = [w for w, c in sorted(hitung.items(), key=lambda x: -x[1])
+                if c >= 2 and w not in ada and w.isalpha() and len(w) > 2]
+
+    tambah = []
+    kata = judul.split()
+    for w in kandidat:
+        if len(kata) >= lo:
+            break
+        kata.append(w.capitalize() if w not in lex.get("merek", ()) else w.upper())
+        tambah.append(w)
+    return " ".join(kata), tambah
+
+
 def harga_deterministik(tetangga: pd.DataFrame, profil: dict, plat: str | None,
                         kategori: str | None, faktor_global: dict) -> int | None:
     """Saran harga dihitung, bukan ditebak model.
@@ -379,7 +416,13 @@ def main():
                     help="jangan buang kata bermerek yang tak didukung foto/katalog")
     ap.add_argument("--tanpa-contoh-pola", action="store_true",
                     help="jangan beri contoh judul nyata dari platform yang sama")
+    ap.add_argument("--panjangkan", action="store_true",
+                    help="tambah kata kunci dari katalog sampai judul mencapai panjang lazim")
     ap.add_argument("--keluaran", default=None, help="tulis ke berkas ini")
+    # Irisan dipakai supaya satu konfigurasi bisa dikerjakan beberapa kali tanpa
+    # mengubah sampelnya: seed sama -> urutan sama -> potongan a:b selalu produk
+    # yang sama. Perlu karena satu run penuh kena batas waktu proses latar.
+    ap.add_argument("--iris", default=None, help="proses sebagian sampel saja, mis. 0:5")
     args = ap.parse_args()
 
     df = pd.read_parquet(SUMBER)
@@ -425,6 +468,12 @@ def main():
               + ", ".join(f"{k}={len(v[1]):,}" for k, v in idx_platform.items()))
 
     sampel = df.sample(args.n, random_state=args.seed)
+    mode = "w"
+    if args.iris:
+        a, b = (int(x) for x in args.iris.split(":"))
+        sampel = sampel.iloc[a:b]
+        mode = "a" if a > 0 else "w"
+        print(f"irisan {a}:{b} -> {len(sampel)} produk")
     keluaran.parent.mkdir(parents=True, exist_ok=True)
 
     # DUA FASE, bukan satu loop. VRAM 8 GB tidak muat gemma3 4B + qwen 7B
@@ -455,7 +504,7 @@ def main():
     print(f"fase 1 selesai: {time.time() - t0:.0f}s\n")
 
     hasil = []
-    with keluaran.open("w", encoding="utf-8") as f:
+    with keluaran.open(mode, encoding="utf-8") as f:
         for i, s in enumerate(fase1, 1):
             mulai = time.time()
             r, fakta, tetangga, pakai = s["r"], s["fakta"], s["tetangga"], s["pakai"]
@@ -486,6 +535,14 @@ def main():
                             h["judul_mentah"] = h["judul"]
                             h["dibuang"] = dibuang
                             h["judul"] = bersih
+                    if args.panjangkan and h.get("judul"):
+                        panjang, tambah = panjangkan_judul(
+                            str(h["judul"]), tetangga if pakai else None,
+                            profil, plat, lex)
+                        if tambah:
+                            h.setdefault("judul_mentah", h["judul"])
+                            h["ditambah"] = tambah
+                            h["judul"] = panjang
                 keluar[plat or "umum"] = h
 
             rec = {
