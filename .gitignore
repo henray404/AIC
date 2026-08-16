@@ -1,0 +1,34 @@
+# Secrets — NEVER commit
+.env
+config/gql_capture.yaml
+
+# DevTools captures: these hold the raw Cookie header verbatim. They are meant
+# to be deleted as soon as scripts/curl_to_config.py has read them, but a
+# forgotten one must never reach a commit.
+capture_*.txt
+
+# Scraped data, images, exports, database
+data/
+logs/
+
+# Salinan lokal dataset Drive (0,9 GB: gambar, merged, ekspor tiap sumber).
+# Bisa diunduh ulang kapan saja lewat scripts/fetch_drive_iac.py — lihat docs/DATASET.md.
+data_drive/
+
+# Sisa unduhan yang putus di tengah jalan
+*.part
+
+# Browser profile (contains session cookies)
+*.profile/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Notebooks
+.ipynb_checkpoints/

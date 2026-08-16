@@ -1,0 +1,574 @@
+{
+ "data": {
+  "searchProductV5": {
+   "header": {
+    "totalData": 320,
+    "responseCode": 0,
+    "keywordProcess": "",
+    "keywordIntention": 0,
+    "componentID": "",
+    "isQuerySafe": true,
+    "additionalParams": "next_offset_organic=60&next_offset_organic_ad=60&search_id=20260804065205BCA82E41EE7B080C4U3L&has_more=true",
+    "backendFilters": "",
+    "meta": {
+     "dynamicFields": "{\"request_id\":\"20260804065205BCA82E41EE7B080C4U3L\",\"search_id\":\"20260804065205BCA82E41EE7B080C4U3L\",\"device_id\":\"7670059839879382548\",\"log_id\":\"20260804145205028049E3B839FF0861F3\",\"handler\":\"tts\",\"engine_latency_microseconds\":\"749595\",\"search_latency_microseconds\":\"1002871\",\"enable_tts_algo_desktop\":\"true\",\"cloud_service_provider\":\"bytecloud\",\"shop_badge_type\":\"default\"}",
+     "__typename": "SearchProductV5Meta"
+    },
+    "__typename": "SearchProductV5Header"
+   },
+   "data": {
+    "totalDataText": "320",
+    "banner": {
+     "position": 0,
+     "text": "",
+     "applink": "",
+     "url": "",
+     "imageURL": "",
+     "componentID": "",
+     "trackingOption": 0,
+     "__typename": "SearchProductV5Banner"
+    },
+    "redirection": {
+     "url": "",
+     "__typename": "SearchProductV5Redirection"
+    },
+    "related": {
+     "relatedKeyword": "",
+     "position": 0,
+     "trackingOption": 0,
+     "otherRelated": [],
+     "__typename": "SearchProductV5Related"
+    },
+    "suggestion": {
+     "currentKeyword": "",
+     "suggestion": "",
+     "query": "",
+     "text": "",
+     "componentID": "",
+     "trackingOption": 0,
+     "__typename": "SearchProductV5Suggestion"
+    },
+    "ticker": {
+     "oldID": 0,
+     "id": "0",
+     "text": "",
+     "query": "",
+     "applink": "",
+     "componentID": "",
+     "trackingOption": 0,
+     "__typename": "SearchProductV5Ticker"
+    },
+    "violation": {
+     "headerText": "",
+     "descriptionText": "",
+     "imageURL": "",
+     "ctaURL": "",
+     "ctaApplink": "",
+     "buttonText": "",
+     "buttonType": "",
+     "__typename": "SearchProductV5Violation"
+    },
+    "products": [
+     {
+      "oldID": 15928976338,
+      "id": "15928976338",
+      "ttsProductID": "1730662955767465974",
+      "name": "BARU! Philips Airfryer Low Watt 500W Transparan BEST COMPACT SIZE 3.2L NA210/00. Air fryer multifungsi digital layar sentuh, air fryer",
+      "url": "https://www.tokopedia.com/philips-estore/baru-philips-airfryer-low-watt-500w-transparan-best-compact-size-3-2l-na210-00-air-fryer-multifungsi-digital-layar-sentuh-air-fryer-1730662955767465974",
+      "applink": "tokopedia://product/15928976338?extParam=ivf%3Dtrue%26keyword%3Dair+fryer%26search_id%3D20260804065205BCA82E41EE7B080C4U3L%26src%3Dsearch%26whid%3D2700",
+      "mediaURL": {
+       "image": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-white-pad-v1:200:200.jpeg",
+       "image300": "https://p19-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-white-pad-v1:300:300.jpeg",
+       "videoCustom": "https://vod-stream.tokopedia.net/view/ttvideo",
+       "__typename": "SearchProductV5MediaURL"
+      },
+      "shop": {
+       "oldID": 2004256,
+       "id": "2004256",
+       "ttsSellerID": "7494510986818980854",
+       "name": "Philips Home Appliances",
+       "url": "https://www.tokopedia.com/philips-estore",
+       "city": "Kab. Bekasi",
+       "tier": 2,
+       "__typename": "SearchProductV5Shop"
+      },
+      "stock": {
+       "ttsSKUID": "1730662981809506294",
+       "__typename": "SearchProductV5Stock"
+      },
+      "badge": {
+       "oldID": 4,
+       "id": "4",
+       "title": "Kab. Bekasi",
+       "url": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/official_store/badge_os.png~tplv-zr7vqa5nfb-image.image",
+       "__typename": "SearchProductV5Badge"
+      },
+      "price": {
+       "text": "Rp730.300",
+       "number": 730300,
+       "range": "",
+       "original": "Rp1.118.800",
+       "discountPercentage": 0,
+       "__typename": "SearchProductV5Price"
+      },
+      "freeShipping": {
+       "url": "",
+       "__typename": "SearchProductV5FreeShipping"
+      },
+      "labelGroups": [
+       {
+        "position": "ri_product_credibility",
+        "title": "10rb+ terjual",
+        "type": "",
+        "url": "",
+        "styles": [],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "nett_price",
+        "title": "Rp730.300",
+        "type": "",
+        "url": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/ic_promo-discount.png~tplv-zr7vqa5nfb-image.image",
+        "styles": [
+         {
+          "key": "background-color",
+          "value": "#FFF5F6",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "background-opacity",
+          "value": "1",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "outline-color",
+          "value": "#FFB2C2",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#F94D63",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "overlay_1",
+        "title": "double_date_4",
+        "type": "",
+        "url": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/314cbe4e1a23494094bd4fd604116826~tplv-aphluv4xwc-origin-png.png",
+        "styles": [],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_product_offer",
+        "title": "Hemat s.d  8% Pakai Bonus",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "text-color",
+          "value": "#FF7F17",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_ribbon",
+        "title": "35%",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "background-color",
+          "value": "#E02954",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#FFFFFF",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "promotion_label",
+        "title": "Pembeli Baru",
+        "type": "",
+        "url": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/promo/icon/discount-ic-2.png~tplv-zr7vqa5nfb-image.image",
+        "styles": [
+         {
+          "key": "background-color",
+          "value": "#FEECEF",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "outline-color",
+          "value": "#FFC1C5",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#D70C4B",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "final_price",
+        "title": "Rp730.300",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "text-color",
+          "value": "#D70C4B",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_product_offer_v2",
+        "title": "Hemat s.d  8% Pakai Bonus",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "outline-color",
+          "value": "#FFD9A8",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#FF7F17",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_product_offer_v2",
+        "title": "Bisa COD",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "outline-color",
+          "value": "#DFE2EA",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#656C7B",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       }
+      ],
+      "labelGroupsVariant": [],
+      "category": {
+       "oldID": 60,
+       "id": "60",
+       "name": "Elektronik",
+       "breadcrumb": "elektronik/elektronik-dapur/air-fryer",
+       "gaKey": "elektronik/elektronik-dapur/air-fryer",
+       "__typename": "SearchProductV5Category"
+      },
+      "rating": "4.9",
+      "wishlist": false,
+      "ads": {
+       "id": "",
+       "productClickURL": "",
+       "productViewURL": "",
+       "productWishlistURL": "",
+       "tag": 0,
+       "__typename": "SearchProductV5Ads"
+      },
+      "meta": {
+       "oldParentID": 0,
+       "parentID": "0",
+       "oldWarehouseID": 2700,
+       "warehouseID": "2700",
+       "isImageBlurred": false,
+       "isPortrait": false,
+       "__typename": "SearchProductV5ProductMeta"
+      },
+      "__typename": "searchProductV5Product"
+     },
+     {
+      "oldID": 100359309456,
+      "id": "100359309456",
+      "ttsProductID": "1729426938259736646",
+      "name": "HAN RIVER Air Fryer HRAF04 3.5L Low power Pink 500 watt  Airfryer",
+      "url": "https://www.tokopedia.com/hanriverofficial/han-river-air-fryer-hraf04-3-5l-low-power-pink-500-watt-airfryer-1729426941521856582",
+      "applink": "tokopedia://product/100359309456?extParam=ivf%3Dtrue%26keyword%3Dair+fryer%26search_id%3D20260804065205BCA82E41EE7B080C4U3L%26src%3Dsearch%26whid%3D9592599",
+      "mediaURL": {
+       "image": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-white-pad-v1:200:200.jpeg",
+       "image300": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-white-pad-v1:300:300.jpeg",
+       "videoCustom": "https://vod-stream.tokopedia.net/view/ttvideo",
+       "__typename": "SearchProductV5MediaURL"
+      },
+      "shop": {
+       "oldID": 9473085,
+       "id": "9473085",
+       "ttsSellerID": "7493994510405239878",
+       "name": "HANRIVER",
+       "url": "https://www.tokopedia.com/hanriverofficial",
+       "city": "Tangerang",
+       "tier": 2,
+       "__typename": "SearchProductV5Shop"
+      },
+      "stock": {
+       "ttsSKUID": "1729426941521856582",
+       "__typename": "SearchProductV5Stock"
+      },
+      "badge": {
+       "oldID": 4,
+       "id": "4",
+       "title": "Tangerang",
+       "url": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/official_store/badge_os.png~tplv-zr7vqa5nfb-image.image",
+       "__typename": "SearchProductV5Badge"
+      },
+      "price": {
+       "text": "Rp268.999",
+       "number": 268999,
+       "range": "",
+       "original": "Rp899.000",
+       "discountPercentage": 0,
+       "__typename": "SearchProductV5Price"
+      },
+      "freeShipping": {
+       "url": "",
+       "__typename": "SearchProductV5FreeShipping"
+      },
+      "labelGroups": [
+       {
+        "position": "ri_product_credibility",
+        "title": "10rb+ terjual",
+        "type": "",
+        "url": "",
+        "styles": [],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "nett_price",
+        "title": "Rp268.999",
+        "type": "",
+        "url": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/ic_promo-discount.png~tplv-zr7vqa5nfb-image.image",
+        "styles": [
+         {
+          "key": "background-color",
+          "value": "#FFF5F6",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "background-opacity",
+          "value": "1",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "outline-color",
+          "value": "#FFB2C2",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#F94D63",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "overlay_1",
+        "title": "double_date_4",
+        "type": "",
+        "url": "https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/314cbe4e1a23494094bd4fd604116826~tplv-aphluv4xwc-origin-png.png",
+        "styles": [],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "overlay_3",
+        "title": "Beli Lokal",
+        "type": "",
+        "url": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/vMWOpN/2025/10/16/1e33b6b7-d4bb-4aed-a1af-ebb46043c369.png~tplv-zr7vqa5nfb-resize-jpeg:700:0.png",
+        "styles": [],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "preventive_overlay",
+        "title": "PreOrder",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "background-color",
+          "value": "#000000",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "background-opacity",
+          "value": "0.5",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#FFFFFF",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_product_offer",
+        "title": "Hemat s.d  8% Pakai Bonus",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "text-color",
+          "value": "#FF7F17",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_ribbon",
+        "title": "70%",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "background-color",
+          "value": "#E02954",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#FFFFFF",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "promotion_label",
+        "title": "Pembeli Baru",
+        "type": "",
+        "url": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/promo/icon/discount-ic-2.png~tplv-zr7vqa5nfb-image.image",
+        "styles": [
+         {
+          "key": "background-color",
+          "value": "#FEECEF",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "outline-color",
+          "value": "#FFC1C5",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#D70C4B",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "final_price",
+        "title": "Rp268.999",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "text-color",
+          "value": "#D70C4B",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_product_offer_v2",
+        "title": "Hemat s.d  8% Pakai Bonus",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "outline-color",
+          "value": "#FFD9A8",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#FF7F17",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       },
+       {
+        "position": "ri_product_offer_v2",
+        "title": "Bisa COD",
+        "type": "",
+        "url": "",
+        "styles": [
+         {
+          "key": "outline-color",
+          "value": "#DFE2EA",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         },
+         {
+          "key": "text-color",
+          "value": "#656C7B",
+          "__typename": "SearchProductV5LabelGroupsStyle"
+         }
+        ],
+        "__typename": "SearchProductV5LabelGroups"
+       }
+      ],
+      "labelGroupsVariant": [],
+      "category": {
+       "oldID": 60,
+       "id": "60",
+       "name": "Elektronik",
+       "breadcrumb": "elektronik/elektronik-dapur/air-fryer",
+       "gaKey": "elektronik/elektronik-dapur/air-fryer",
+       "__typename": "SearchProductV5Category"
+      },
+      "rating": "4.7",
+      "wishlist": false,
+      "ads": {
+       "id": "",
+       "productClickURL": "",
+       "productViewURL": "",
+       "productWishlistURL": "",
+       "tag": 0,
+       "__typename": "SearchProductV5Ads"
+      },
+      "meta": {
+       "oldParentID": 100359309455,
+       "parentID": "100359309455",
+       "oldWarehouseID": 9592599,
+       "warehouseID": "9592599",
+       "isImageBlurred": false,
+       "isPortrait": false,
+       "__typename": "SearchProductV5ProductMeta"
+      },
+      "__typename": "searchProductV5Product"
+     }
+    ],
+    "__typename": "SearchProductV5Data"
+   },
+   "__typename": "SearchProductV5Response"
+  }
+ }
+}
