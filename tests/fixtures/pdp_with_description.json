@@ -1,0 +1,319 @@
+{
+ "data": {
+  "pdpMainInfo": {
+   "requestID": "",
+   "extraPayload": "",
+   "data": {
+    "layoutName": "Default Layout Desktop",
+    "basicInfo": {
+     "alias": "baru-philips-airfryer-low-watt-500w-transparan-best-compact-size-3-2l-na210-00-air-fryer-multifungsi-digital-layar-sentuh-air-fryer-1730662955767465974",
+     "createdAt": "2024-12-16T14:40:51+07:00",
+     "isQA": false,
+     "id": "15928976338",
+     "shopID": "2004256",
+     "shopName": "Philips Home Appliances",
+     "minOrder": 1,
+     "maxOrder": 366,
+     "weight": 5.46,
+     "weightUnit": "KILOGRAM",
+     "condition": "NEW",
+     "status": "ACTIVE",
+     "url": "https://www.tokopedia.com/philips-estore/baru-philips-airfryer-low-watt-500w-transparan-best-compact-size-3-2l-na210-00-air-fryer-multifungsi-digital-layar-sentuh-air-fryer-1730662955767465974",
+     "needPrescription": false,
+     "catalogID": "0",
+     "isLeasing": false,
+     "isBlacklisted": false,
+     "isTokoNow": false,
+     "defaultMediaURL": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+     "menu": {
+      "id": "26534400",
+      "name": "",
+      "url": "",
+      "__typename": "pdpMenu"
+     },
+     "blacklistMessage": {
+      "identifier": "",
+      "imageURL": "",
+      "title": "",
+      "description": "",
+      "button": "",
+      "buttonArea": "",
+      "buttonName": "",
+      "url": "",
+      "supportingImage": {
+       "url": "",
+       "width": 0,
+       "height": 0,
+       "__typename": "pdpImageWithSize"
+      },
+      "__typename": "pdpBlacklistMessage"
+     },
+     "category": {
+      "id": "5472",
+      "name": "Air Fryer",
+      "title": "",
+      "breadcrumbURL": "https://www.tokopedia.com/p/elektronik/elektronik-dapur/air-fryer",
+      "isAdult": false,
+      "isKyc": false,
+      "minAge": 0,
+      "detail": [
+       {
+        "id": "60",
+        "name": "Elektronik",
+        "breadcrumbURL": "https://www.tokopedia.com/p/elektronik",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "3882",
+        "name": "Elektronik Dapur",
+        "breadcrumbURL": "https://www.tokopedia.com/p/elektronik/elektronik-dapur",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "5472",
+        "name": "Air Fryer",
+        "breadcrumbURL": "https://www.tokopedia.com/p/elektronik/elektronik-dapur/air-fryer",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       }
+      ],
+      "ttsID": "935304",
+      "ttsDetail": [
+       {
+        "id": "600942",
+        "name": "Peralatan Rumah Tangga",
+        "breadcrumbURL": "",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "844168",
+        "name": "Kitchen Appliances",
+        "breadcrumbURL": "",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "935304",
+        "name": "Fryer",
+        "breadcrumbURL": "",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       }
+      ],
+      "__typename": "pdpCategory"
+     },
+     "txStats": {
+      "transactionSuccess": "0",
+      "transactionReject": "0",
+      "countSold": "13000",
+      "paymentVerified": "0",
+      "itemSoldFmt": "10 rb+",
+      "__typename": "pdpTxStats"
+     },
+     "stats": {
+      "countView": "0",
+      "countReview": "2436",
+      "countTalk": "0",
+      "rating": 4.9,
+      "__typename": "pdpStats"
+     },
+     "productID": "15928976338",
+     "ttsPID": "1730662955767465974",
+     "ttsSKUID": "1730662981809506294",
+     "ttsShopID": "7494510986818980854",
+     "isAggregatedWithTTS": true,
+     "__typename": "pdpBasicInfo"
+    },
+    "__typename": "pdpMainInfoData"
+   },
+   "components": [
+    {
+     "name": "product_media",
+     "type": "product_media",
+     "kind": "default",
+     "position": "[0,0,1,4]",
+     "data": [
+      {
+       "media": [
+        {
+         "type": "image",
+         "urlOriginal": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "urlThumbnail": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-resize-jpeg:200:0.jpeg",
+         "urlMaxRes": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-white-pad-v1:1600:1600.jpeg",
+         "videoUrl": "",
+         "prefix": "https://images.tokopedia.net/img/cache/",
+         "suffix": "/aphluv/1997/1/1/e0947b98257d43b79c42a5aea62fddd1~.jpeg",
+         "description": "",
+         "variantOptionID": "0",
+         "__typename": "pdpContentSnapshotMedia"
+        },
+        {
+         "type": "video",
+         "urlOriginal": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "urlThumbnail": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-resize-jpeg:200:0.jpeg",
+         "urlMaxRes": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/e0947b98257d43b79c42a5aea62fddd1~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "videoUrl": "https://v16-tkp-vod.tokopedia-static.net/09f9a291bc085e29fed6ac91ee2397ea/6a71e30c/video/tos/alisg/tos-alisg-v-f466fc-sg/owuQG1u6EIhjrvZrMYaiwdBUF6iAACJw82WAX/",
+         "prefix": "https://images.tokopedia.net/img/cache/",
+         "suffix": "/aphluv/1997/1/1/e0947b98257d43b79c42a5aea62fddd1~.jpeg",
+         "description": "",
+         "variantOptionID": "0",
+         "__typename": "pdpContentSnapshotMedia"
+        },
+        {
+         "type": "image",
+         "urlOriginal": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/a28644e3cfa04d368762bca08b4d1ccb~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "urlThumbnail": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/a28644e3cfa04d368762bca08b4d1ccb~tplv-aphluv4xwc-resize-jpeg:200:0.jpeg",
+         "urlMaxRes": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/a28644e3cfa04d368762bca08b4d1ccb~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "videoUrl": "",
+         "prefix": "https://images.tokopedia.net/img/cache/",
+         "suffix": "/aphluv/1997/1/1/a28644e3cfa04d368762bca08b4d1ccb~.jpeg",
+         "description": "",
+         "variantOptionID": "0",
+         "__typename": "pdpContentSnapshotMedia"
+        }
+       ],
+       "videos": [],
+       "__typename": "pdpDataProductMedia"
+      }
+     ],
+     "__typename": "pdpComponent"
+    },
+    {
+     "name": "product_content",
+     "type": "product_content",
+     "kind": "default",
+     "position": "[1,1,1,1]",
+     "data": [
+      {
+       "name": "BARU! Philips Airfryer Low Watt 500W Transparan BEST COMPACT SIZE 3.2L NA210/00. Air fryer multifungsi digital layar sentuh, air fryer",
+       "price": {
+        "value": 770300,
+        "currency": "UNKNOWN",
+        "priceFmt": "Rp770.300",
+        "slashPriceFmt": "Rp1.118.800",
+        "discPercentage": "31%",
+        "__typename": "pdpContentSnapshotPrice"
+       },
+       "campaign": {
+        "campaignID": "7668595002671449874",
+        "campaignType": "66",
+        "campaignTypeName": "Kejar Diskon",
+        "campaignIdentifier": 1,
+        "background": "#D72C2C",
+        "percentageAmount": 31,
+        "originalPrice": 1118800,
+        "discountedPrice": 770300,
+        "originalStock": 366,
+        "stock": 366,
+        "stockSoldPercentage": 97,
+        "threshold": 7,
+        "startDate": "2026-08-01 00:00:00",
+        "endDate": "2026-08-31 23:59:59",
+        "endDateUnix": "1788195599",
+        "appLinks": "",
+        "isAppsOnly": false,
+        "isActive": true,
+        "hideGimmick": false,
+        "showStockBar": true,
+        "__typename": "pdpContentSnapshotCampaign"
+       },
+       "thematicCampaign": {
+        "additionalInfo": "Spesial Diskon",
+        "background": "#16754E,#47DB6D",
+        "campaignName": "<span style='color:#FFFFFF'><b>Spesial Diskon</b></span>",
+        "icon": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/yLOfon/2026/6/24/b85b1795-6814-4f42-940f-78fbabac843f.png~tplv-zr7vqa5nfb-resize-jpeg:700:0.png",
+        "__typename": "pdpContentSnapshotThematicCampaign"
+       },
+       "stock": {
+        "useStock": false,
+        "value": "366",
+        "stockWording": "",
+        "__typename": "pdpContentSnapshotStock"
+       },
+       "variant": {
+        "isVariant": false,
+        "parentID": "15928976338",
+        "__typename": "pdpContentSnapshotVariant"
+       },
+       "wholesale": [],
+       "isCashback": {
+        "percentage": 0,
+        "__typename": "pdpContentSnapshotIsCashback"
+       },
+       "isTradeIn": false,
+       "isOS": true,
+       "isPowerMerchant": true,
+       "isWishlist": false,
+       "isCOD": false,
+       "preorder": {
+        "duration": 0,
+        "timeUnit": "DAY",
+        "isActive": false,
+        "preorderInDays": 0,
+        "__typename": "pdpContentSnapshotPreorder"
+       },
+       "__typename": "pdpDataProductContent"
+      }
+     ],
+     "__typename": "pdpComponent"
+    },
+    {
+     "name": "product_detail",
+     "type": "product_detail",
+     "kind": "default",
+     "position": "[1,3,1,1]",
+     "data": [
+      {
+       "title": "Detail produk",
+       "productDetailDescription": {
+        "title": "Deskripsi",
+        "content": "BARU! Philips Airfryer Low Watt 500W Transparan BEST COMPACT SIZE 3.2L NA210/00. Air fryer multifungsi digital layar sentuh, air fryer\n\nAirfryer PHILIPS Mulai dari 500 Watt dengan daya maksimal 800 Watt, Air Fryer 3.2 L dengan jendela transparan, Rapid Air Technology, air fryer low watt, Philips airfryer NA210/00 - hitam - air fryer terbaik\nHanya air fryer philips bisa masak seenak itu!\n\nDengan jendela intip, tidak perlu lagi buka tutup airfryer untuk cek kematangan.\nJangan ragu lagi dengan Philips Air Fryer, masakan auto enak anti gagal, Anda akan mendapatkan hasil yang benar-benar matang.\n\nDijamin dan PASTI Awet Barangnya\nJika rusak, klaim garansi ke seluruh service center Philips di Indonesia\nPhilips memberikan Garansi Resmi 2 tahun di seluruh dunia\n\nKlaim garansi tukar baru\nS&K :\nKlaim penggantian baru dalam 30 hari dari tanggal pembelian hanya dapat dilakukan apabila : \n- Kerusakan dikarenakan cacat produk (bukan karena kesalahan pengguna)\n- Menunjukkan invoice/faktur/bukti pembelian\n\n️UNTUK CLAIM KERUSAKAN PRODUK PADA AWAL PEMBELIAN WAJIB MELAMPIRKAN VIDEO UNBOXING, JIKA TIDAK ADA VIDEO UNBOXING MAKA SELLER TIDAK TERIMA CLAIM️\n\nMasak apa aja pakai Philips Airfryer\nHasilnya Seenak Itu!\nIni caranya:\n1. Buka tray kemudian masukkan bahan makanan yang ingin kamu masak\n2. Pilih preset menu sesuai masakan yang diinginkan\nUntuk masak, pilih mode: Goreng, Bakar, Panggang\nUntuk memanaskan, tekan mode: Reheat\n3. Atur waktu dan suhu sesuai keinginan dan masakan anda\n4. Tekan logo start untuk mulai dan tunggu matang deh! Hasilnya pasti seenak itu!\n\nJANGAN RAGU LAGI BELI PHILIPS AIR FRYER\n\nPASTI AUTO ENAK ANTI GAGAL menggunakan udara panas yang berputar dengan cepat dan kuat yang dipatenkan dengan teknologi Rapid Air+ technology dan patented starfish design. Memastikan masakan seenak itu, cepat matang merata. Krispi di luar dan juicy di dalam\nPASTI HEMAT LISTRIK. Hanya mulai dari 500 Watt. Low Watt, tanpa takut mati listrik\nPASTI AMAN - Bebas PFOA, Bebas Teflon, Bahan panci Airfryer tersertifikasi Food Grade Eropa, Tersertifikasi SNI, aman dan nyaman digunakan. Bahan mudah dicuci dan dibersihkan\nPASTI BERKUALITAS - Design premium - bahan berkualitas tinggi dengan warna yang estetik dan tampilan mewah\nPASTI AMAN SAMPAI DITERIMA - Dikemas dengan Aman – Packaging yang kokoh dengan menggunakan pengemasan double box dan bubble wrap yang tebal untuk menjamin pengiriman yang aman\nPASTI SEHAT - dengan teknologi pengurangan kadar minyak hingga 90% - Masak lebih sehat, cocok untuk orang yang sedang menjaga pola diet sehat sehingga meminimalisir kolesterol\nPASTI MULTIFUNGSI – Dapat digunakan untuk menggoreng seperti ayam goreng lengkuas, ikan goreng, bakwan jagung ; membakar seperti steak, ayam bakar, nasi bakar ; hingga memanggang seperti ayam panggang, kue, cookies, croissant, lasagna ; serta menghangatkan frozen food – Proses memasak tidak berisik, badan Airfryer tidak panas, tidak berasap dan tidak berbau sehingga lebih aman dan nyaman\nPASTI PRAKTIS – Air fryer secara otomatis akan berhenti beroperasi saat keranjang di tarik keluar dan akan otomatis melanjutkan masak Ketika keranjang dimasukkan kembali tanpa perlu klik tombol apapun\nPASTI AWET - Kualitas Eropa terjamin awetnya – Jika rusak, klaim garansi resmi 2 tahun di seluruh dunia.\n\nCara membersihkan Airfryer\n1. Pastikan Airfryer tidak dalam keadaan disambungkan ke aliran Listrik\n2. Pastikan panci dalam Airfryer sudah dalam keadaan dingin\n3. Bersihkan badan bagian luar Airfryer menggunakan lap bersih\n4. Ventilasi pembuangan angin dan area pemanas air fryer akan berminyak dan kotor setelah penggunaan jangka panjang. Saat membersihkan bagian-bagian tersebut, Anda dapat membersihkan dengan spons yang dibasahi air, kemudian gunakan sikat untuk menghilangkan bagian yang sulit dibersihkan, setelahnya lap dengan tisu.\n5. Keluarkan keranjang/panci Airfryer\n6. Cuci bersih keranjang/panci Airfryer dengan sabun.\n7. Pastikan keranjang/panci Airfryer kering sebelum dipasangkan kembali ke badan Airfryer.\n\nBarang-barang yang anda dapatkan di dalam kotak:\n- 1 x Air Fryer\n- 1 x Kartu Garansi – Pastikan Anda menyimpan kartu garansi\n",
+        "__typename": "pdpDataProductDetailDescription"
+       },
+       "content": [
+        {
+         "title": "Kondisi",
+         "subtitle": "Baru",
+         "applink": "",
+         "showAtFront": true,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        },
+        {
+         "title": "Pemesanan Minimum",
+         "subtitle": "1 Buah",
+         "applink": "",
+         "showAtFront": true,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        },
+        {
+         "title": "Kategori",
+         "subtitle": "Air Fryer",
+         "applink": "https://www.tokopedia.com/p/elektronik/elektronik-dapur/air-fryer",
+         "showAtFront": false,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        },
+        {
+         "title": "Etalase",
+         "subtitle": "Semua Etalase",
+         "applink": "https://www.tokopedia.com/philips-estore/etalase",
+         "showAtFront": true,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        }
+       ],
+       "__typename": "pdpDataProductDetail"
+      }
+     ],
+     "__typename": "pdpComponent"
+    }
+   ],
+   "__typename": "pdpMainInfo"
+  }
+ }
+}

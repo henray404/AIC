@@ -1,0 +1,21 @@
+# Core
+pydantic>=2.7
+PyYAML>=6.0
+python-dotenv>=1.0
+rich>=13.7
+
+# Fetchers
+curl_cffi>=0.7          # GraphQLFetcher: TLS fingerprint impersonation
+playwright>=1.44        # PlaywrightFetcher (also run: playwright install chromium)
+requests>=2.32          # ManagedFetcher + image downloader
+
+# Analysis / notebooks
+pandas>=2.2
+matplotlib>=3.8
+jupyter>=1.0
+
+# Tests
+pytest>=8.2
+
+# Optional: Parquet export. Install manually if wanted.
+# pyarrow>=16.0

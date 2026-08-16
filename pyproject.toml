@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tokopedia-scraper"
+version = "0.1.0"
+description = "Two-stage Tokopedia product scraper with swappable fetch backends"
+requires-python = ">=3.10"
+# Runtime deps live in requirements.txt so `pip install -r` stays the one
+# obvious way to set up. This package is installed with `pip install -e .`
+# purely to put src/ on the path.
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,327 @@
+{
+ "data": {
+  "pdpMainInfo": {
+   "requestID": "",
+   "extraPayload": "",
+   "data": {
+    "layoutName": "Default Layout Desktop",
+    "basicInfo": {
+     "alias": "han-river-air-fryer-hraf04-3-5l-low-power-pink-500-watt-airfryer-1729426941521856582",
+     "createdAt": "2022-04-20T14:24:30+07:00",
+     "isQA": false,
+     "id": "100359309456",
+     "shopID": "9473085",
+     "shopName": "HANRIVER",
+     "minOrder": 1,
+     "maxOrder": 1340,
+     "weight": 4,
+     "weightUnit": "KILOGRAM",
+     "condition": "NEW",
+     "status": "ACTIVE",
+     "url": "https://www.tokopedia.com/hanriverofficial/han-river-air-fryer-hraf04-3-5l-low-power-pink-500-watt-airfryer-1729426941521856582",
+     "needPrescription": false,
+     "catalogID": "0",
+     "isLeasing": false,
+     "isBlacklisted": false,
+     "isTokoNow": false,
+     "defaultMediaURL": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+     "menu": {
+      "id": "0",
+      "name": "",
+      "url": "",
+      "__typename": "pdpMenu"
+     },
+     "blacklistMessage": {
+      "identifier": "",
+      "imageURL": "",
+      "title": "",
+      "description": "",
+      "button": "",
+      "buttonArea": "",
+      "buttonName": "",
+      "url": "",
+      "supportingImage": {
+       "url": "",
+       "width": 0,
+       "height": 0,
+       "__typename": "pdpImageWithSize"
+      },
+      "__typename": "pdpBlacklistMessage"
+     },
+     "category": {
+      "id": "5472",
+      "name": "Air Fryer",
+      "title": "",
+      "breadcrumbURL": "https://www.tokopedia.com/p/elektronik/elektronik-dapur/air-fryer",
+      "isAdult": false,
+      "isKyc": false,
+      "minAge": 0,
+      "detail": [
+       {
+        "id": "60",
+        "name": "Elektronik",
+        "breadcrumbURL": "https://www.tokopedia.com/p/elektronik",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "3882",
+        "name": "Elektronik Dapur",
+        "breadcrumbURL": "https://www.tokopedia.com/p/elektronik/elektronik-dapur",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "5472",
+        "name": "Air Fryer",
+        "breadcrumbURL": "https://www.tokopedia.com/p/elektronik/elektronik-dapur/air-fryer",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       }
+      ],
+      "ttsID": "935304",
+      "ttsDetail": [
+       {
+        "id": "600942",
+        "name": "Peralatan Rumah Tangga",
+        "breadcrumbURL": "",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "844168",
+        "name": "Kitchen Appliances",
+        "breadcrumbURL": "",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       },
+       {
+        "id": "935304",
+        "name": "Fryer",
+        "breadcrumbURL": "",
+        "isAdult": false,
+        "__typename": "pdpCategoryDetail"
+       }
+      ],
+      "__typename": "pdpCategory"
+     },
+     "txStats": {
+      "transactionSuccess": "0",
+      "transactionReject": "0",
+      "countSold": "45280",
+      "paymentVerified": "0",
+      "itemSoldFmt": "10 rb+",
+      "__typename": "pdpTxStats"
+     },
+     "stats": {
+      "countView": "0",
+      "countReview": "5751",
+      "countTalk": "0",
+      "rating": 4.7,
+      "__typename": "pdpStats"
+     },
+     "productID": "100359309456",
+     "ttsPID": "1729426938259736646",
+     "ttsSKUID": "1729426941521856582",
+     "ttsShopID": "7493994510405239878",
+     "isAggregatedWithTTS": true,
+     "__typename": "pdpBasicInfo"
+    },
+    "__typename": "pdpMainInfoData"
+   },
+   "components": [
+    {
+     "name": "product_media",
+     "type": "product_media",
+     "kind": "default",
+     "position": "[0,0,1,4]",
+     "data": [
+      {
+       "media": [
+        {
+         "type": "image",
+         "urlOriginal": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "urlThumbnail": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-resize-jpeg:200:0.jpeg",
+         "urlMaxRes": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-white-pad-v1:1600:1600.jpeg",
+         "videoUrl": "",
+         "prefix": "https://images.tokopedia.net/img/cache/",
+         "suffix": "/aphluv/1997/1/1/f7ce567d4e324e7da9317873f9949e45~.jpeg",
+         "description": "",
+         "variantOptionID": "0",
+         "__typename": "pdpContentSnapshotMedia"
+        },
+        {
+         "type": "video",
+         "urlOriginal": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "urlThumbnail": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-resize-jpeg:200:0.jpeg",
+         "urlMaxRes": "https://p19-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/f7ce567d4e324e7da9317873f9949e45~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "videoUrl": "https://v16-tkp-vod.tokopedia-static.net/2742c75a505ecf8b4e41cf87f39bfee4/6a71e328/video/tos/alisg/tos-alisg-v-f466fc-sg/os6x7wgsQEEHcCLBqXnClDgB0IecQVtfgDLFWF/",
+         "prefix": "https://images.tokopedia.net/img/cache/",
+         "suffix": "/aphluv/1997/1/1/f7ce567d4e324e7da9317873f9949e45~.jpeg",
+         "description": "",
+         "variantOptionID": "0",
+         "__typename": "pdpContentSnapshotMedia"
+        },
+        {
+         "type": "image",
+         "urlOriginal": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/1ac5f927b8584a1996a95fbb94b0f3f4~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "urlThumbnail": "https://p16-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/1ac5f927b8584a1996a95fbb94b0f3f4~tplv-aphluv4xwc-resize-jpeg:200:0.jpeg",
+         "urlMaxRes": "https://p19-images-sign-sg.tokopedia-static.net/tos-alisg-i-aphluv4xwc-sg/1ac5f927b8584a1996a95fbb94b0f3f4~tplv-aphluv4xwc-resize-jpeg:700:0.jpeg",
+         "videoUrl": "",
+         "prefix": "https://images.tokopedia.net/img/cache/",
+         "suffix": "/aphluv/1997/1/1/1ac5f927b8584a1996a95fbb94b0f3f4~.jpeg",
+         "description": "",
+         "variantOptionID": "0",
+         "__typename": "pdpContentSnapshotMedia"
+        }
+       ],
+       "videos": [],
+       "__typename": "pdpDataProductMedia"
+      }
+     ],
+     "__typename": "pdpComponent"
+    },
+    {
+     "name": "product_content",
+     "type": "product_content",
+     "kind": "default",
+     "position": "[1,1,1,1]",
+     "data": [
+      {
+       "name": "HAN RIVER Air Fryer HRAF04 3.5L Low power Pink 500 watt  Airfryer - Hitam",
+       "price": {
+        "value": 271919,
+        "currency": "UNKNOWN",
+        "priceFmt": "Rp271.919",
+        "slashPriceFmt": "Rp899.000",
+        "discPercentage": "70%",
+        "__typename": "pdpContentSnapshotPrice"
+       },
+       "campaign": {
+        "campaignID": "57263906",
+        "campaignType": "377",
+        "campaignTypeName": "Guncang 8.8",
+        "campaignIdentifier": 5,
+        "background": "#D72C2C",
+        "percentageAmount": 70,
+        "originalPrice": 899000,
+        "discountedPrice": 271919,
+        "originalStock": 1340,
+        "stock": 1340,
+        "stockSoldPercentage": 97,
+        "threshold": 7,
+        "startDate": "2026-08-03 00:00:00",
+        "endDate": "2026-08-09 07:00:00",
+        "endDateUnix": "1786233600",
+        "appLinks": "tokopedia://discovery/guncang",
+        "isAppsOnly": false,
+        "isActive": true,
+        "hideGimmick": false,
+        "showStockBar": false,
+        "__typename": "pdpContentSnapshotCampaign"
+       },
+       "thematicCampaign": {
+        "additionalInfo": "Spesial Diskon",
+        "background": "#16754E,#47DB6D",
+        "campaignName": "<span style='color:#FFFFFF'><b>Spesial Diskon</b></span>",
+        "icon": "https://p16-images-comn-sg.tokopedia-static.net/tos-alisg-i-zr7vqa5nfb-sg/img/yLOfon/2026/6/24/b85b1795-6814-4f42-940f-78fbabac843f.png~tplv-zr7vqa5nfb-resize-jpeg:700:0.png",
+        "__typename": "pdpContentSnapshotThematicCampaign"
+       },
+       "stock": {
+        "useStock": false,
+        "value": "1340",
+        "stockWording": "",
+        "__typename": "pdpContentSnapshotStock"
+       },
+       "variant": {
+        "isVariant": true,
+        "parentID": "100359309455",
+        "__typename": "pdpContentSnapshotVariant"
+       },
+       "wholesale": [],
+       "isCashback": {
+        "percentage": 0,
+        "__typename": "pdpContentSnapshotIsCashback"
+       },
+       "isTradeIn": false,
+       "isOS": true,
+       "isPowerMerchant": true,
+       "isWishlist": false,
+       "isCOD": false,
+       "preorder": {
+        "duration": 0,
+        "timeUnit": "DAY",
+        "isActive": false,
+        "preorderInDays": 0,
+        "__typename": "pdpContentSnapshotPreorder"
+       },
+       "__typename": "pdpDataProductContent"
+      }
+     ],
+     "__typename": "pdpComponent"
+    },
+    {
+     "name": "product_detail",
+     "type": "product_detail",
+     "kind": "default",
+     "position": "[1,3,1,1]",
+     "data": [
+      {
+       "title": "Detail produk",
+       "productDetailDescription": {
+        "title": "Deskripsi",
+        "content": "",
+        "__typename": "pdpDataProductDetailDescription"
+       },
+       "content": [
+        {
+         "title": "Kondisi",
+         "subtitle": "Baru",
+         "applink": "",
+         "showAtFront": true,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        },
+        {
+         "title": "Preorder",
+         "subtitle": "0 Hari",
+         "applink": "",
+         "showAtFront": true,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        },
+        {
+         "title": "Pemesanan Minimum",
+         "subtitle": "1 Buah",
+         "applink": "",
+         "showAtFront": true,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        },
+        {
+         "title": "Kategori",
+         "subtitle": "Air Fryer",
+         "applink": "https://www.tokopedia.com/p/elektronik/elektronik-dapur/air-fryer",
+         "showAtFront": false,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        },
+        {
+         "title": "Etalase",
+         "subtitle": "Semua Etalase",
+         "applink": "https://www.tokopedia.com/hanriverofficial/etalase",
+         "showAtFront": true,
+         "isAnnotation": false,
+         "__typename": "pdpContentProductDetail"
+        }
+       ],
+       "__typename": "pdpDataProductDetail"
+      }
+     ],
+     "__typename": "pdpComponent"
+    }
+   ],
+   "__typename": "pdpMainInfo"
+  }
+ }
+}

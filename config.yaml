@@ -1,0 +1,154 @@
+# Tokopedia scraper configuration.
+#
+# NO SECRETS HERE. Cookies, headers and API keys live in .env — see .env.example.
+# Any value below can be overridden by env var TOKOSCRAPE_<SECTION>__<KEY>,
+# e.g. TOKOSCRAPE_RATE_LIMIT__MIN_DELAY=3.0 or TOKOSCRAPE_FETCHER=playwright.
+
+# Which backend fetches the data.
+#   graphql    — curl_cffi against the internal GraphQL API. Fast, free, fragile.
+#   playwright — real browser. Slow, free, resilient.
+#   managed    — paid third-party scraper API. Costs money.
+#   auto       — graphql, falling back to playwright after N consecutive failures.
+fetcher: graphql
+
+# Stage 1 search keywords. Derived from 2026 Indonesian marketplace trend
+# reporting — swap freely, they are just search strings.
+# Tokopedia caps a keyword at roughly 320 results, so more pages does not mean
+# more products — more keywords does. 50 keywords against a 400 target puts the
+# ceiling near 20k, inside the 5k-30k goal. Adding to this list is always safe:
+# keywords already marked done are skipped without a single request.
+keywords:
+  # fashion
+  - kaos polos pria
+  - hoodie oversize
+  - sepatu sneakers pria
+  - tas selempang wanita
+  - jaket bomber
+  - kemeja flanel pria
+  - celana cargo pria
+  - dress wanita casual
+  - sandal jepit pria
+  - kaos kaki olahraga
+  # elektronik
+  - tws bluetooth
+  - powerbank 20000mah
+  - smartwatch
+  - headphone gaming
+  - keyboard mechanical
+  - mouse wireless
+  - speaker bluetooth portable
+  - kabel data type c
+  - charger fast charging
+  - webcam hd
+  # skincare & kecantikan
+  - serum niacinamide
+  - toner salicylic acid
+  - sunscreen wajah
+  - pelembab centella
+  - lip tint
+  - masker wajah sheet
+  - micellar water
+  - parfum wanita
+  # dapur & rumah tangga
+  - air fryer
+  - chopper elektrik
+  - rice cooker mini
+  - blender portable
+  - panci set anti lengket
+  - teko listrik
+  - wadah makanan kaca
+  - rak bumbu dapur
+  # makanan & minuman
+  - kopi bubuk arabika
+  - snack kiloan
+  - madu murni
+  - teh celup herbal
+  - keripik pisang
+  - abon sapi
+  # kesehatan & olahraga
+  - vitamin c 1000mg
+  - suplemen kolagen
+  - matras yoga
+  - dumbbell set
+  - sepatu lari pria
+  - botol minum olahraga
+  - resistance band
+  - timbangan badan digital
+
+search:
+  # searchProductV5 returns 24 rows per page — confirmed from a live capture,
+  # where header.additionalParams carried next_offset_organic=24.
+  # 20 keywords x 20 pages x 24 rows = ~9.6k products ceiling.
+  max_pages_per_keyword: 20
+  rows_per_page: 24
+  # A keyword counts as "done" (and is skipped on resume) once it has produced
+  # this many products, or the response reports has_more=false.
+  target_per_keyword: 400
+
+rate_limit:
+  # Randomised delay between requests. Constant intervals are a bot tell.
+  min_delay: 2.0
+  max_delay: 5.0
+  # Parallel requests. 1 is the polite default; >1 warns, >3 is rejected.
+  concurrency: 1
+  max_retries: 5
+  backoff_base: 2.0        # seconds; delay = base ** attempt + jitter
+  backoff_max: 120.0
+  # Abort the run after this many consecutive failures rather than keep
+  # hammering a server that is clearly refusing us.
+  circuit_breaker_threshold: 10
+
+auto:
+  # fetcher: auto — switch graphql -> playwright after this many consecutive
+  # failures. Does not switch back.
+  fallback_after_failures: 5
+
+graphql:
+  # Written by scripts/curl_to_config.py from your DevTools capture.
+  # Gitignored: it embeds request details tied to your session.
+  capture_file: config/gql_capture.yaml
+  # curl_cffi TLS fingerprint profile. Match the browser you captured from.
+  impersonate: chrome
+  timeout: 30
+
+playwright:
+  # false, not true. Measured: headless Chromium is refused by Tokopedia at the
+  # HTTP/2 level (net::ERR_HTTP2_PROTOCOL_ERROR) on every page including the
+  # homepage, with no route blocking or profile options set at all. Headed gets
+  # HTTP 200. A visible window is the price of this backend working.
+  headless: false
+  # Persist cookies between runs so you are not re-challenged every time.
+  persistent_profile: true
+  profile_dir: data/browser_profile
+  # Resource types to abort. Dropping images makes search pages far cheaper;
+  # PDP image URLs still arrive in the HTML.
+  block_resources: [font, media, stylesheet, image]
+  nav_timeout_ms: 30000
+  selector_timeout_ms: 15000
+  # Stepwise scrolling to trigger lazy-loaded search results.
+  scroll_steps: 8
+  scroll_pause_ms: 800
+
+managed:
+  # scrapingbee | zenrows | apify
+  provider: scrapingbee
+  render_js: true
+  timeout: 90
+
+images:
+  enabled: true
+  concurrency: 4
+  timeout: 30
+  max_per_product: 8
+  dir: data/images
+
+storage:
+  db_path: data/products.db
+  export_dir: data/exports
+
+logging:
+  level: INFO
+  file: logs/scraper.log
+
+# Optional proxy for every backend. null = direct connection.
+proxy_url: null
