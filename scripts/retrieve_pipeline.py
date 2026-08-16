@@ -162,9 +162,62 @@ def ringkas_konteks(tetangga: pd.DataFrame) -> str:
     return "\n".join(bagian)
 
 
+PROFIL_PATH = PROJECT / "data_drive" / "merged" / "platform_profiles.json"
+
+
+def muat_profil() -> dict:
+    if not PROFIL_PATH.exists():
+        return {}
+    return json.loads(PROFIL_PATH.read_text(encoding="utf-8"))
+
+
+def aturan_platform(profil: dict, nama: str, kategori: str | None) -> str:
+    """Aturan gaya khas satu platform, diturunkan dari data nyata.
+
+    Judul blibli median 9 kata, Tokopedia 15, Shopee 11 dan gemar tanda '/'.
+    Harga fashion di blibli 3x Tokopedia untuk kategori yang sama. Tanpa ini,
+    satu gaya dipaksakan ke semua lapak.
+    """
+    p = profil.get(nama)
+    if not p:
+        return ""
+    j = p["judul"]
+    lo, hi = j["target_kata"]
+    baris = [f"Platform tujuan: {nama}.",
+             f"- Panjang judul yang lazim di sini: {lo}-{hi} kata (median {j['median_kata']})."]
+    if j["pct_garis_miring"] >= 20:
+        baris.append("- Penjual di sini biasa memisahkan kata kunci dengan tanda '/'.")
+    desk = p["deskripsi"]["median_char"]
+    if desk:
+        baris.append(f"- Panjang deskripsi lazim sekitar {desk} karakter.")
+    else:
+        baris.append("- Platform ini tidak punya data deskripsi; tulis ringkas saja.")
+
+    h = p["harga_per_kategori"].get(kategori or "") or p["harga_per_kategori"].get("SEMUA")
+    if h:
+        # Sengaja TIDAK menyuruh "pakai tengah rentang ini". Rentang per kategori
+        # sangat lebar (kategori 'lainnya' membentang Rp21rb-Rp969rb), dan ketika
+        # dijadikan dasar, model membuang bukti yang jauh lebih tepat: harga produk
+        # kembar di katalog. Rentang ini hanya untuk arah, bukan sumber angka.
+        baris.append(f"- Sebagai arah saja, harga di platform ini untuk kategori serupa "
+                     f"berkisar Rp{h['p25']:,} - Rp{h['p75']:,}. Tetap utamakan harga "
+                     "produk serupa dari katalog di atas.")
+    else:
+        baris.append("- Tidak ada data harga untuk platform ini; isi perkiraan_harga dengan 0.")
+
+    kk = p["kosakata_khas"].get(kategori or "")
+    if kk:
+        baris.append(f"- Kata yang khas dipakai di platform ini: {', '.join(kk[:8])}.")
+    return "\n".join(baris)
+
+
 ATURAN = (
     "Tulis listing untuk produk di foto. Aturan:\n"
-    "- Judul maksimal 12 kata, sebut jenis barang lebih dulu.\n"
+    # Panjang judul diserahkan ke aturan platform kalau ada. Batas keras 12 kata
+    # di sini pernah bertabrakan dengan target Tokopedia (10-20 kata) dan model
+    # selalu menurut ke yang lebih ketat, jadi judul Tokopedia keluar terlalu pendek.
+    "- Panjang judul: ikuti bagian 'Gaya listing platform tujuan' bila ada; "
+    "kalau tidak ada, maksimal 12 kata. Sebut jenis barang lebih dulu.\n"
     "- Deskripsi 2-3 kalimat, menarik tapi hanya menyebut hal yang terlihat.\n"
     "- DILARANG menyebut ukuran, isi, berat, rasa, varian, atau nomor model "
     "kecuali benar-benar terbaca di foto.\n"
@@ -175,15 +228,137 @@ ATURAN = (
 )
 
 
-def susun_prompt(fakta: str, tetangga: pd.DataFrame | None) -> str:
+LEXICON_PATH = PROJECT / "data_drive" / "merged" / "lexicon.json"
+
+
+def muat_lexicon() -> dict:
+    if not LEXICON_PATH.exists():
+        return {}
+    lex = json.loads(LEXICON_PATH.read_text(encoding="utf-8"))
+    return {"merek": set(lex.get("merek", [])), "jenis": set(lex.get("jenis", []))}
+
+
+def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
+                 lex: dict) -> tuple[str, list[str]]:
+    """Buang kata spesifik di judul yang tidak didukung foto maupun katalog.
+
+    Verifikasi pasca-generasi, bukan pencegahan lewat prompt: larangan di prompt
+    sudah dicoba dan tetap bocor ("Tas Longchamp" untuk tas tanpa merek). Kata
+    jenis barang tetap lolos supaya kalimatnya tidak rusak; yang disaring hanya
+    kata spesifik yang tidak ada dasarnya.
+    """
+    if not lex or not judul:
+        return judul, []
+    dukungan = set(token(fakta))
+    if tetangga is not None and len(tetangga):
+        for t in tetangga["title_bersih"]:
+            dukungan |= set(token(t))
+
+    simpan, dibuang = [], []
+    for w in judul.split():
+        bersih = re.sub(r"[^\w\.\-/]", "", w).lower()
+        if not bersih or len(bersih) < 3 or bersih in lex["jenis"] or bersih in dukungan:
+            simpan.append(w)
+        elif not bersih.isalpha():
+            simpan.append(w)          # kode varian/angka diurus penyaring lain
+        else:
+            dibuang.append(w)
+    return " ".join(simpan).strip(" -/&,"), dibuang
+
+
+def harga_deterministik(tetangga: pd.DataFrame, profil: dict, plat: str | None,
+                        kategori: str | None, faktor_global: dict) -> int | None:
+    """Saran harga dihitung, bukan ditebak model.
+
+    Dasarnya harga tengah produk kembar di katalog — bukti paling tepat yang kita
+    punya. Lalu digeser oleh faktor platform: fashion di blibli median 3x Tokopedia,
+    jadi barang yang sama pantas dipasang lebih tinggi di sana.
+
+    Model bahasa buruk dalam aritmatika dan gampang tergoda memakai angka bulat
+    dari rentang kategori; perhitungan ini menutup celah itu.
+    """
+    if tetangga is None or not len(tetangga):
+        return None
+    h = pd.to_numeric(tetangga["price"], errors="coerce").dropna()
+    h = h[h > 0]
+    if not len(h):
+        return None
+    acuan = float(h.median())
+
+    # Faktor dihitung terhadap platform ASAL tetangga, bukan rata-rata global.
+    # Tetangga hampir selalu berasal dari satu platform (pencarian menarik produk
+    # kembar), jadi memakai pembagi global berarti menggeser dua kali: harga
+    # sampo Tokopedia Rp55.100 sempat jatuh ke Rp42.800 padahal sudah benar.
+    if plat and kategori:
+        asal = tetangga["source"].mode()
+        asal = str(asal.iloc[0]) if len(asal) else None
+        tuj = profil.get(plat, {}).get("harga_per_kategori", {}).get(kategori)
+        src = profil.get(asal, {}).get("harga_per_kategori", {}).get(kategori)
+        if tuj and src and src["median"]:
+            faktor = tuj["median"] / src["median"]
+            # dikunci 0,5x-2x supaya kategori sampah seperti 'lainnya' tidak meledak
+            acuan *= min(max(faktor, 0.5), 2.0)
+    return int(round(acuan / 100) * 100)
+
+
+SHOPEE_CSV = PROJECT / "data_drive" / "data" / "external" / "shopee" / "data_products_id_small.csv"
+
+
+def indeks_per_platform(df: pd.DataFrame, maks_shopee: int = 40_000) -> dict:
+    """Indeks judul terpisah per platform, untuk contoh pola yang sepadan.
+
+    Menyodorkan judul Tokopedia sebagai contoh untuk listing blibli justru
+    mengajarkan gaya yang salah — panjangnya beda 6 kata. Contoh harus datang
+    dari lapak yang sama.
+    """
+    idx = {}
+    for plat, g in df.groupby("source"):
+        judul = g["title_bersih"].tolist()
+        idx[str(plat)] = (Indeks(judul), judul)
+    if SHOPEE_CSV.exists():
+        nama = pd.read_csv(SHOPEE_CSV, usecols=["name"])["name"].astype(str)
+        nama = nama.sample(min(maks_shopee, len(nama)), random_state=0).tolist()
+        idx["shopee"] = (Indeks(nama), nama)
+    return idx
+
+
+def contoh_pola(idx_platform: dict, plat: str | None, fakta: str, n: int = 2) -> list[str]:
+    """Dua judul nyata dari platform itu untuk produk semirip mungkin."""
+    if not plat or plat not in idx_platform:
+        return []
+    indeks, judul = idx_platform[plat]
+    return [samar_angka(judul[i]) for i, _ in indeks.cari(fakta, n)]
+
+
+def susun_prompt(fakta: str, tetangga: pd.DataFrame | None,
+                 profil: dict | None = None, platform: str | None = None,
+                 idx_platform: dict | None = None) -> str:
     kepala = ("Kamu penulis listing marketplace Indonesia.\n\n"
               f"Yang terlihat di foto produk: {fakta}\n\n")
-    if tetangga is None or not len(tetangga):
+
+    kategori = None
+    bagian = []
+    if tetangga is not None and len(tetangga):
+        modus = tetangga["kategori_umkm"].mode()
+        kategori = str(modus.iloc[0]) if len(modus) else None
+        bagian.append("Rujukan dari katalog produk nyata (hanya untuk kosakata, "
+                      "kategori, dan harga — bukan untuk menyalin spesifikasi):\n"
+                      + ringkas_konteks(tetangga))
+    if profil and platform:
+        aturan = aturan_platform(profil, platform, kategori)
+        if aturan:
+            bagian.append("Gaya listing platform tujuan (patuhi ini):\n" + aturan)
+    if idx_platform and platform:
+        pola = contoh_pola(idx_platform, platform, fakta)
+        if pola:
+            bagian.append("Contoh pola judul nyata dari platform ini — tiru panjang dan "
+                          "susunannya, JANGAN salin produknya (angka sudah disamarkan):\n"
+                          + "\n".join(f"  - {p}" for p in pola))
+
+    if not bagian:
         # tetangga terlalu jauh: lebih baik keluaran umum daripada salah meyakinkan
         return kepala + ATURAN
-    return (kepala + "Rujukan dari katalog produk nyata (hanya untuk kosakata, "
-            "kategori, dan harga — bukan untuk menyalin spesifikasi):\n"
-            + ringkas_konteks(tetangga) + "\n\n" + ATURAN)
+    return kepala + "\n\n".join(bagian) + "\n\n" + ATURAN
 
 
 def main():
@@ -193,8 +368,18 @@ def main():
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--min-skor", type=float, default=2.0,
                     help="di bawah ini konteks katalog tidak dipakai sama sekali")
+    ap.add_argument("--platform", default=None,
+                    help="blibli | tokopedia | shopee | all (satu foto, satu listing per platform)")
     ap.add_argument("--hanya-cari", default=None,
                     help="lewati model, cuma tunjukkan hasil pencarian untuk teks ini")
+    # sakelar ablasi: mematikan satu perbaikan supaya efeknya bisa diukur sendiri
+    ap.add_argument("--tanpa-harga-hitung", action="store_true",
+                    help="pakai tebakan harga dari model, jangan dihitung dari katalog")
+    ap.add_argument("--tanpa-saring-merek", action="store_true",
+                    help="jangan buang kata bermerek yang tak didukung foto/katalog")
+    ap.add_argument("--tanpa-contoh-pola", action="store_true",
+                    help="jangan beri contoh judul nyata dari platform yang sama")
+    ap.add_argument("--keluaran", default=None, help="tulis ke berkas ini")
     args = ap.parse_args()
 
     df = pd.read_parquet(SUMBER)
@@ -213,51 +398,114 @@ def main():
                   f"Rp{int(r['price']):,}")
         return
 
+    profil = muat_profil()
+    lex = muat_lexicon()
+    print(f"kamus merek: {len(lex.get('merek', ())):,} merek, "
+          f"{len(lex.get('jenis', ())):,} kata jenis" if lex else "kamus merek: tidak ada")
+    # median harga tiap kategori lintas platform, jadi pembagi faktor platform
+    faktor_global = (pd.to_numeric(df["price"], errors="coerce")
+                     .groupby(df["kategori_umkm"]).median().to_dict())
+    if args.platform == "all":
+        platform_list = [p for p in ("blibli", "tokopedia", "shopee") if p in profil]
+    elif args.platform:
+        platform_list = [args.platform]
+    else:
+        platform_list = [None]          # satu listing generik, seperti sebelumnya
+    if args.platform and not profil:
+        print("peringatan: platform_profiles.json belum ada — "
+              "jalankan scripts/build_platform_profiles.py dulu")
+    print(f"platform: {[p or 'umum' for p in platform_list]}")
+    if args.tanpa_saring_merek:
+        lex = {}
+    idx_platform = ({} if args.tanpa_contoh_pola
+                    else indeks_per_platform(df) if any(platform_list) else {})
+    keluaran = Path(args.keluaran) if args.keluaran else KELUARAN
+    if idx_platform:
+        print("indeks contoh pola per platform: "
+              + ", ".join(f"{k}={len(v[1]):,}" for k, v in idx_platform.items()))
+
     sampel = df.sample(args.n, random_state=args.seed)
-    KELUARAN.parent.mkdir(parents=True, exist_ok=True)
+    keluaran.parent.mkdir(parents=True, exist_ok=True)
+
+    # DUA FASE, bukan satu loop. VRAM 8 GB tidak muat gemma3 4B + qwen 7B
+    # sekaligus, jadi loop campur memaksa Ollama menukar model tiap produk dan
+    # sebagian besar waktu habis untuk memuat bobot, bukan berpikir.
+    t0 = time.time()
+    fase1 = []
+    for i, (idx, r) in enumerate(sampel.iterrows(), 1):
+        mulai = time.time()
+        try:
+            fakta = panggil(MODEL_VISI, PROMPT_VISI,
+                            images=[muat_gambar(Path(r["local_image_paths"][0]))])
+            galat = ""
+        except Exception as e:
+            fakta, galat = "", f"{type(e).__name__}: {e}"[:150]
+        cocok = [(j, s) for j, s in indeks.cari(fakta, args.k + 1) if j != idx][:args.k]
+        skor_teratas = cocok[0][1] if cocok else 0.0
+        pakai = skor_teratas >= args.min_skor
+        tetangga = df.iloc[[j for j, _ in cocok]] if pakai else df.iloc[[]]
+        kat_modus = None
+        if pakai and len(tetangga):
+            mm = tetangga["kategori_umkm"].mode()
+            kat_modus = str(mm.iloc[0]) if len(mm) else None
+        fase1.append(dict(r=r, fakta=fakta, tetangga=tetangga, pakai=pakai,
+                          skor=skor_teratas, kat=kat_modus, galat=galat,
+                          detik=time.time() - mulai))
+        print(f"[lihat {i}/{len(sampel)}] {time.time() - mulai:.1f}s  {fakta[:48]}")
+    print(f"fase 1 selesai: {time.time() - t0:.0f}s\n")
+
     hasil = []
-    with KELUARAN.open("w", encoding="utf-8") as f:
-        for i, (idx, r) in enumerate(sampel.iterrows(), 1):
+    with keluaran.open("w", encoding="utf-8") as f:
+        for i, s in enumerate(fase1, 1):
             mulai = time.time()
-            try:
-                fakta = panggil(MODEL_VISI, PROMPT_VISI,
-                                images=[muat_gambar(Path(r["local_image_paths"][0]))])
-                cocok = indeks.cari(fakta, args.k + 1)
-                # buang dirinya sendiri kalau kebetulan terambil
-                cocok = [(j, s) for j, s in cocok if j != idx][:args.k]
-                skor_teratas = cocok[0][1] if cocok else 0.0
-                # tetangga terlalu jauh -> jangan beri konteks sama sekali
-                pakai = skor_teratas >= args.min_skor
-                tetangga = df.iloc[[j for j, _ in cocok]] if pakai else df.iloc[[]]
-                mentah = panggil(MODEL_TEKS, susun_prompt(fakta, tetangga if pakai else None),
-                                 num_predict=400, minta_json=True)
+            r, fakta, tetangga, pakai = s["r"], s["fakta"], s["tetangga"], s["pakai"]
+            keluar, galat = {}, s["galat"]
+            for plat in platform_list:
                 try:
-                    keluar = json.loads(mentah)
+                    mentah = panggil(
+                        MODEL_TEKS,
+                        susun_prompt(fakta, tetangga if pakai else None, profil, plat,
+                                     idx_platform),
+                        num_predict=400, minta_json=True)
+                    h = json.loads(mentah)
                 except json.JSONDecodeError:
-                    keluar = {"_mentah": mentah[:300]}
-                galat = ""
-            except Exception as e:
-                fakta, tetangga, keluar = "", df.iloc[[]], {}
-                skor_teratas, pakai = 0.0, False
-                galat = f"{type(e).__name__}: {e}"[:150]
+                    h = {"_mentah": mentah[:300]}
+                except Exception as e:
+                    h, galat = {}, f"{type(e).__name__}: {e}"[:150]
+                if isinstance(h, dict) and h and "_mentah" not in h:
+                    h["harga_model"] = h.get("perkiraan_harga")
+                    hitung = (None if args.tanpa_harga_hitung else
+                              harga_deterministik(tetangga if pakai else None, profil,
+                                                  plat, s["kat"], faktor_global))
+                    if hitung:
+                        h["perkiraan_harga"] = hitung
+                    if lex and h.get("judul"):
+                        bersih, dibuang = saring_merek(
+                            str(h["judul"]), fakta, tetangga if pakai else None, lex)
+                        if dibuang:
+                            h["judul_mentah"] = h["judul"]
+                            h["dibuang"] = dibuang
+                            h["judul"] = bersih
+                keluar[plat or "umum"] = h
 
             rec = {
                 "product_id": r["product_id"], "source": r["source"],
                 "judul_asli": r["title_bersih"], "harga_asli": int(r["price"]),
                 "kategori_asli": r["kategori_umkm"], "vlm": fakta,
-                "skor_teratas": round(float(skor_teratas), 2), "pakai_konteks": bool(pakai),
+                "skor_teratas": round(float(s["skor"]), 2), "pakai_konteks": bool(pakai),
                 "tetangga": tetangga["title_bersih"].tolist() if len(tetangga) else [],
-                "hasil": keluar, "detik": round(time.time() - mulai, 1), "galat": galat,
+                "platform": platform_list, "hasil": keluar,
+                "detik": round(s["detik"] + time.time() - mulai, 1), "galat": galat,
             }
             hasil.append(rec)
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
             f.flush()
-            print(f"[{i}/{len(sampel)}] {rec['detik']}s  {r['title_bersih'][:45]}")
+            print(f"[tulis {i}/{len(fase1)}] {rec['detik']}s  {r['title_bersih'][:42]}")
 
     h = pd.DataFrame(hasil)
     print(f"\n{len(h)} produk, {h['detik'].mean():.1f} detik/produk, "
-          f"{int((h['galat'] != '').sum())} galat")
-    print(f"-> {KELUARAN}")
+          f"total {time.time() - t0:.0f}s, {int((h['galat'] != '').sum())} galat")
+    print(f"-> {keluaran}")
 
 
 if __name__ == "__main__":
