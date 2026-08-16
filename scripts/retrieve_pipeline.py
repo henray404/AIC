@@ -252,7 +252,9 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
         return judul, []
     # model kadang menulis "merek tidak tertera"; potongannya menyisakan
     # judul rusak seperti "Gaun Floral Merek Tidak", jadi dibuang utuh
-    judul = re.sub(r"(?i)\bmerek\s+(tidak|belum)\s+\w+", " ", judul)
+    # tanda baca ikut dilangkahi: model menulis "Merek: Tidak Tertera", dan pola
+    # tanpa [:,-] hanya memotong ekornya sehingga tersisa "... Merek Tidak"
+    judul = re.sub(r"(?i)\bmerek\s*[:,\-]?\s*(tidak|belum|no)\b[\w\s]*", " ", judul)
     judul = re.sub(r"\s+", " ", judul).strip()
 
     dukungan = set(token(fakta))

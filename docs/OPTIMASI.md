@@ -18,7 +18,13 @@ jadi efeknya bisa dipisah — bukan disimpulkan dari perasaan.
 | C tanpa hitung harga | 2,6% | 0,0% | 10,3% | 82,8% | 0,399 | 18,4 |
 | D tanpa saring merek | 2,6% | **17,2%** | 27,6% | 75,9% | 0,384 | 18,5 |
 | E tanpa contoh + pemanjangan | 2,6% | 0,0% | 13,8% | **20,7%** | 0,278 | 18,4 |
-| **F** penjaga presisi (dipakai) | **2,6%** | **0,0%** | 10,0% | 76,7% | **0,403** | 18,4 |
+| **F** penjaga presisi | **2,6%** | **0,0%** | 10,0% | 76,7% | **0,403** | 18,4 |
+| **G** F + frasa "merek tidak" (dipakai) | **2,6%** | **0,0%** | 13,3% | **80,0%** | 0,387 | 18,7 |
+
+G adalah keadaan akhir kode. Selisihnya terhadap F ada di dalam derau; yang
+diperbaiki adalah artefak yang hanya kelihatan kalau keluarannya dibaca: model
+menulis "Merek: Tidak Tertera" dengan titik dua, pola lama cuma memotong ekornya
+dan menyisakan judul "Gaun Floral Merek Tidak".
 
 Dua ukuran halusinasi merek dipakai bersamaan, dan bedanya penting:
 
