@@ -11,13 +11,26 @@ jadi efeknya bisa dipisah — bukan disimpulkan dari perasaan.
 
 ## Hasil pokok
 
-| konfigurasi | harga meleset | merek karangan | panjang patuh | inti | detik |
-|---|---|---|---|---|---|
-| **A** semua perbaikan mati | 34,4% | 20,7% | 13,8% | 0,292 | 20,3 |
-| **B** semua perbaikan nyala | **2,6%** | **3,3%** | **80,0%** | **0,393** | 18,4 |
-| C tanpa hitung harga | 2,6% | 10,3% | 82,8% | 0,399 | 18,4 |
-| D tanpa saring merek | 2,6% | **27,6%** | 75,9% | 0,384 | 18,5 |
-| E tanpa contoh + pemanjangan | 2,6% | 13,8% | **20,7%** | 0,278 | 18,4 |
+| konfigurasi | harga meleset | merek karangan (sempit) | merek (lebar) | panjang patuh | inti | detik |
+|---|---|---|---|---|---|---|
+| **A** semua perbaikan mati | 34,4% | 6,9% | 20,7% | 13,8% | 0,292 | 20,3 |
+| B penjaga galak | 2,6% | **0,0%** | 3,3% | 80,0% | 0,393 | 18,4 |
+| C tanpa hitung harga | 2,6% | 0,0% | 10,3% | 82,8% | 0,399 | 18,4 |
+| D tanpa saring merek | 2,6% | **17,2%** | 27,6% | 75,9% | 0,384 | 18,5 |
+| E tanpa contoh + pemanjangan | 2,6% | 0,0% | 13,8% | **20,7%** | 0,278 | 18,4 |
+| **F** penjaga presisi (dipakai) | **2,6%** | **0,0%** | 10,0% | 76,7% | **0,403** | 18,4 |
+
+Dua ukuran halusinasi merek dipakai bersamaan, dan bedanya penting:
+
+- **lebar** — kata apa pun di judul yang tidak ada di keluaran tahap 1 maupun di
+  judul produk kembar.
+- **sempit** — dari kata-kata itu, hanya yang benar-benar bermasalah: nama merek
+  nyata milik produk lain, atau istilah langka yang tidak ada di kosakata katalog.
+
+Ukuran lebar menghukum kata Indonesia lazim seperti "pesta" dan "jogging" yang
+sebenarnya sah. Karena itu B tampak menang atas F (3,3% lawan 10,0%) padahal pada
+ukuran yang benar keduanya sama-sama **0,0%** — dan F mencapainya tanpa membuang
+kata sah, sehingga `inti` justru naik ke 0,403.
 
 Median panjang judul (kata):
 
@@ -40,9 +53,21 @@ jadi jelas bukan merek). Setelah model menulis judul, tiap kata diperiksa: kata
 jenis selalu lolos; kata spesifik hanya lolos kalau muncul di penglihatan model
 atau di judul produk kembar. Sisanya dibuang.
 
-**Pengaruh.** Merek karangan **27,6% → 3,3%** (D lawan B). Contoh tertangkap:
-"Fantech" masuk judul keyboard karena merek itu ada di daftar kosakata khas
-platform — bukan karena terbaca di foto.
+**Pengaruh.** Halusinasi merek pada ukuran sempit **17,2% → 0,0%** (D lawan F).
+Contoh tertangkap: "Fantech" masuk judul keyboard karena merek itu ada di daftar
+kosakata khas platform — bukan karena terbaca di foto; juga "Altraze" pada tas
+yang tak bermerek, dan "Longchamp" pada tas biasa.
+
+**Versi pertama terlalu galak, dan itu ketahuan dari contohnya, bukan dari
+angkanya.** Penjaga v1 membuang 6 kata, tapi hanya 2 yang benar-benar merek
+karangan — "Pesta", "Pelembut Pakaian", dan "Jogging" ikut terbuang padahal sah.
+Ia juga memotong "Merek Tidak Tertera" jadi "Gaun Floral Merek Tidak".
+
+Versi kedua memakai tiga golongan: kata yang ada dasarnya selalu lolos; nama merek
+yang dikenal wajib punya dukungan; kata Indonesia lazim (muncul di ≥20 produk)
+dibiarkan; hanya istilah langka tak dikenal yang dibuang. Frasa "merek tidak
+tertera" dihapus utuh. Hasilnya sama bersih pada ukuran sempit, dengan kerusakan
+sampingan jauh lebih sedikit.
 
 **Kenapa ini jalan yang benar.** Menaikkan model dari 4B ke 7B tidak menyentuh
 cacat ini sama sekali (skor inti 0,483 lawan 0,468 pada 100 gambar). Larangan
@@ -123,6 +148,10 @@ membuat lima konfigurasi di atas bisa diuji dalam satu malam.
 2. **Metrik hanya menguji konsistensi internal.** "Merek karangan" diukur terhadap
    keluaran tahap 1 dan katalog — bukan terhadap isi foto. Kalau tahap penglihatan
    salah baca, metrik ini tidak akan tahu. Untuk itu perlu penilaian manusia.
+5. **Metrik bisa menyesatkan kalau definisinya sama dengan definisi penjaganya.**
+   Ukuran lebar memberi nilai lebih baik kepada penjaga yang lebih galak, karena
+   keduanya memakai definisi "tak berdasar" yang sama. Ketahuan hanya setelah
+   keluarannya dibaca satu per satu. Selalu periksa contoh, jangan percaya tabel.
 3. **Kategori masih lemah.** Semua sebaran harga bersandar pada `kategori_umkm`
    yang 37,8% jatuh ke `lainnya`.
 4. **Kesalahan yang tersisa nyata.** Gaun Eprise asli Rp479.800 disarankan

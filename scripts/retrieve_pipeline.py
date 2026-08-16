@@ -235,7 +235,8 @@ def muat_lexicon() -> dict:
     if not LEXICON_PATH.exists():
         return {}
     lex = json.loads(LEXICON_PATH.read_text(encoding="utf-8"))
-    return {"merek": set(lex.get("merek", [])), "jenis": set(lex.get("jenis", []))}
+    return {"merek": set(lex.get("merek", [])), "jenis": set(lex.get("jenis", [])),
+            "umum": set(lex.get("umum", []))}
 
 
 def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
@@ -249,6 +250,11 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
     """
     if not lex or not judul:
         return judul, []
+    # model kadang menulis "merek tidak tertera"; potongannya menyisakan
+    # judul rusak seperti "Gaun Floral Merek Tidak", jadi dibuang utuh
+    judul = re.sub(r"(?i)\bmerek\s+(tidak|belum)\s+\w+", " ", judul)
+    judul = re.sub(r"\s+", " ", judul).strip()
+
     dukungan = set(token(fakta))
     if tetangga is not None and len(tetangga):
         for t in tetangga["title_bersih"]:
@@ -257,12 +263,16 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
     simpan, dibuang = [], []
     for w in judul.split():
         bersih = re.sub(r"[^\w\.\-/]", "", w).lower()
-        if not bersih or len(bersih) < 3 or bersih in lex["jenis"] or bersih in dukungan:
-            simpan.append(w)
-        elif not bersih.isalpha():
-            simpan.append(w)          # kode varian/angka diurus penyaring lain
+        if not bersih or len(bersih) < 3 or not bersih.isalpha():
+            simpan.append(w)                       # tanda baca & kode varian
+        elif bersih in dukungan or bersih in lex["jenis"]:
+            simpan.append(w)                       # ada dasarnya
+        elif bersih in lex["merek"]:
+            dibuang.append(w)                      # merek nyata, tapi bukan milik foto ini
+        elif bersih in lex.get("umum", ()):
+            simpan.append(w)                       # kata Indonesia lazim, bukan merek
         else:
-            dibuang.append(w)
+            dibuang.append(w)                      # istilah langka tak dikenal
     return " ".join(simpan).strip(" -/&,"), dibuang
 
 

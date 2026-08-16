@@ -31,6 +31,7 @@ TUJUAN = PROJECT / "data_drive" / "merged" / "lexicon.json"
 MIN_MEREK = 3        # merek harus muncul sebagai kata pertama di >=3 produk
 MIN_JENIS = 40       # kata jenis muncul di banyak produk
 MIN_KATEGORI = 4     # ...dan tersebar di >=4 kategori
+MIN_UMUM = 20        # kata dianggap lazim kalau muncul di >=20 produk
 
 
 def token(teks) -> list[str]:
@@ -66,7 +67,12 @@ def bangun() -> dict:
     # kandidat merek: sering jadi kata pertama judul, tapi bukan kata jenis
     merek |= {w for w, n in kepala.items() if n >= MIN_MEREK and w not in jenis}
     merek -= jenis
-    return {"merek": sorted(merek), "jenis": sorted(jenis)}
+
+    # Kata umum: apa pun yang muncul di >=20 produk. Dipakai penjaga merek untuk
+    # membedakan "kata Indonesia biasa" dari "istilah asing yang dikarang".
+    # Tanpa daftar ini penjaga membuang kata sah seperti "pesta" dan "jogging".
+    umum = {w for w, n in per_kata_produk.items() if n >= MIN_UMUM}
+    return {"merek": sorted(merek), "jenis": sorted(jenis), "umum": sorted(umum)}
 
 
 def main():
@@ -75,6 +81,7 @@ def main():
     TUJUAN.write_text(json.dumps(lex, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"merek : {len(lex['merek']):,} istilah")
     print(f"jenis : {len(lex['jenis']):,} istilah")
+    print(f"umum  : {len(lex['umum']):,} istilah")
     print("contoh merek:", ", ".join(lex["merek"][:12]))
     print("contoh jenis:", ", ".join(lex["jenis"][:12]))
     print(f"\n-> {TUJUAN}")
