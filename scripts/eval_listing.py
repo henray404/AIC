@@ -36,15 +36,29 @@ def kata(teks) -> set[str]:
     return {w.lower() for w in KATA.findall(str(teks)) if w.lower() not in STOP}
 
 
+LEKSIKON = PROJECT / "data_drive" / "merged" / "lexicon.json"
+
+
 def muat_profil() -> dict:
     return json.loads(PROFIL.read_text(encoding="utf-8")) if PROFIL.exists() else {}
+
+
+def _muat_lex() -> dict:
+    if not LEKSIKON.exists():
+        return {}
+    lex = json.loads(LEKSIKON.read_text(encoding="utf-8"))
+    return {"merek": set(lex.get("merek", [])), "umum": set(lex.get("umum", []))}
+
+
+LEX = _muat_lex()
 
 
 def nilai(path: Path, profil: dict) -> dict:
     baris = [json.loads(l) for l in path.open(encoding="utf-8")]
     m: dict[str, list] = {k: [] for k in
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
-                           "merek_karang", "panjang_patuh", "inti", "desk_char", "detik")}
+                           "merek_karang", "merek_sempit", "panjang_patuh", "inti",
+                           "desk_char", "detik")}
     per_platform: dict[str, list] = {}
 
     for r in baris:
@@ -71,7 +85,15 @@ def nilai(path: Path, profil: dict) -> dict:
 
             karang_angka = [a for a in ANGKA.findall(judul) if a.lower() not in angka_terlihat]
             m["spek_karang"].append(bool(karang_angka))
-            m["merek_karang"].append(bool(kj - terlihat - katalog))
+            asing = kj - terlihat - katalog
+            m["merek_karang"].append(bool(asing))
+            # Ukuran sempit: dari kata tak berdasar, hanya hitung yang benar-benar
+            # bermasalah — nama merek nyata milik produk lain, atau istilah langka
+            # yang tidak ada di kosakata katalog. Ukuran lebar di atas menghukum
+            # kata Indonesia lazim ("pesta", "jogging") yang sebenarnya sah.
+            if LEX:
+                m["merek_sempit"].append(
+                    any(w in LEX["merek"] or w not in LEX["umum"] for w in asing))
 
             harga = h.get("perkiraan_harga")
             try:
@@ -120,6 +142,7 @@ def nilai(path: Path, profil: dict) -> dict:
                              if m["harga_model_err"] else float("nan")),
         "spek_karang%": round(100 * rata("spek_karang"), 1),
         "merek_karang%": round(100 * rata("merek_karang"), 1),
+        "merek_sempit%": round(100 * rata("merek_sempit"), 1),
         "panjang_patuh%": round(100 * rata("panjang_patuh"), 1),
         "inti": round(rata("inti"), 3),
         "desk_char": round(rata("desk_char")),
@@ -137,7 +160,7 @@ def main():
     hasil = [nilai(Path(b), profil) for b in args.berkas]
 
     kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "harga_model_err%",
-             "spek_karang%", "merek_karang%", "panjang_patuh%", "inti", "desk_char", "detik"]
+             "spek_karang%", "merek_karang%", "merek_sempit%", "panjang_patuh%", "inti", "desk_char", "detik"]
     lebar = {k: max([len(k)] + [len(str(h[k])) for h in hasil]) for k in kunci}
     print(" | ".join(k.ljust(lebar[k]) for k in kunci))
     print("-+-".join("-" * lebar[k] for k in kunci))
