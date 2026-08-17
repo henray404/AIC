@@ -32,6 +32,7 @@ MIN_MEREK = 3        # merek harus muncul sebagai kata pertama di >=3 produk
 MIN_JENIS = 40       # kata jenis muncul di banyak produk
 MIN_KATEGORI = 4     # ...dan tersebar di >=4 kategori
 MIN_UMUM = 20        # kata dianggap lazim kalau muncul di >=20 produk
+RASIO_KEPALA = 0.5   # merek: >=50% kemunculannya sebagai kata pertama judul
 
 
 def token(teks) -> list[str]:
@@ -65,7 +66,12 @@ def bangun() -> dict:
              if n >= MIN_JENIS and len(per_kata_kategori[w]) >= MIN_KATEGORI}
 
     # kandidat merek: sering jadi kata pertama judul, tapi bukan kata jenis
-    merek |= {w for w, n in kepala.items() if n >= MIN_MEREK and w not in jenis}
+    # Merek hampir selalu jadi kata PERTAMA judul; kata deskriptif ("gaming",
+    # "premium") muncul di mana saja. Tanpa syarat rasio ini, "gaming" ikut
+    # terdaftar sebagai merek dan penjaga membuangnya dari judul yang sah.
+    merek |= {w for w, n in kepala.items()
+              if n >= MIN_MEREK and w not in jenis
+              and n / max(per_kata_produk[w], 1) >= RASIO_KEPALA}
     merek -= jenis
 
     # Kata umum: apa pun yang muncul di >=20 produk. Dipakai penjaga merek untuk

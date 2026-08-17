@@ -21,10 +21,10 @@ jadi efeknya bisa dipisah — bukan disimpulkan dari perasaan.
 | **F** penjaga presisi | **2,6%** | **0,0%** | 10,0% | 76,7% | **0,403** | 18,4 |
 | **G** F + frasa "merek tidak" (dipakai) | **2,6%** | **0,0%** | 13,3% | **80,0%** | 0,387 | 18,7 |
 
-G adalah keadaan akhir kode. Selisihnya terhadap F ada di dalam derau; yang
-diperbaiki adalah artefak yang hanya kelihatan kalau keluarannya dibaca: model
-menulis "Merek: Tidak Tertera" dengan titik dua, pola lama cuma memotong ekornya
-dan menyisakan judul "Gaun Floral Merek Tidak".
+| **I** penjaga angka + bukti foto (**final**) | **2,6%** | **0,0%** | 17,2% | 79,3% | **0,399** | **17,8** |
+
+Kolom `spek_karang` — ukuran dan isi yang dikarang — baru tuntas di I:
+**10,0% → 0,0%**. I adalah keadaan akhir kode.
 
 Dua ukuran halusinasi merek dipakai bersamaan, dan bedanya penting:
 
@@ -79,6 +79,29 @@ sampingan jauh lebih sedikit.
 cacat ini sama sekali (skor inti 0,483 lawan 0,468 pada 100 gambar). Larangan
 lewat prompt sudah dicoba tiga putaran dan tetap bocor. Merek tercetak di kemasan
 dan terdaftar di katalogmu, jadi persoalannya mencocokkan, bukan mengingat.
+
+### 1b. Penjaga angka dan aturan bukti — spesifikasi karangan 10,0% → 0,0%
+
+**Masalah.** Penjaga merek hanya memeriksa kata; angka lolos bebas. Model menulis
+"Shampoo … 500ml", "Softergent … 200g", "… 20 Sachet" untuk foto yang tidak memuat
+satu pun angka itu. Ukuran salah di judul bukan sekadar cacat mutu — pembeli bisa
+menuntut penjual.
+
+**Cara kerja.** Angka dan satuan diperlakukan lebih ketat daripada kata: **hanya
+foto yang jadi bukti**, katalog tidak berlaku. Tetangga boleh 500ml sementara botol
+di foto 200ml. Kode varian yang benar-benar terbaca tetap lolos (`040-15`,
+`26x26cm` selamat karena angkanya ada di keluaran tahap 1).
+
+**Dua celah lain yang ikut tertutup**, keduanya ketahuan dari membaca keluaran:
+
+- **"ZARA" lolos ke judul gaun tanpa merek** karena merek itu ada di judul tetangga
+  katalog. Aturan diubah: dukungan katalog tidak lagi mengesahkan kata langka —
+  merek milik produk lain bukan bukti untuk foto ini.
+- **"Gaming" ikut terbuang** karena ada toko bernama begitu sehingga kata itu masuk
+  daftar merek. Diperbaiki di sumbernya: sebuah kata baru dianggap merek kalau
+  ≥50% kemunculannya sebagai **kata pertama** judul. Merek berperilaku begitu; kata
+  deskriptif tidak. Daftar merek menyusut 1.934 → 1.642, dan "gaming" keluar
+  sementara "fantech" tetap masuk.
 
 ### 2. Gaya per platform + contoh pola sepadan — berhasil, efeknya besar
 

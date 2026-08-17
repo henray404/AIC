@@ -257,24 +257,45 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
     judul = re.sub(r"(?i)\bmerek\s*[:,\-]?\s*(tidak|belum|no)\b[\w\s]*", " ", judul)
     judul = re.sub(r"\s+", " ", judul).strip()
 
-    dukungan = set(token(fakta))
+    # Dua tingkat bukti. Untuk kata biasa, katalog cukup. Untuk MEREK, hanya foto
+    # yang sah: tetangga katalog boleh bermerek ZARA tanpa membuat gaun di foto
+    # jadi ZARA — dan itu persis yang lolos sebelum pemisahan ini dibuat.
+    dukungan_foto = set(token(fakta))
+    dukungan = set(dukungan_foto)
     if tetangga is not None and len(tetangga):
         for t in tetangga["title_bersih"]:
             dukungan |= set(token(t))
 
+    # Angka & satuan hanya sah kalau terbaca di foto. Katalog TIDAK berlaku sebagai
+    # bukti di sini: tetangga boleh 500ml sementara botol di foto 200ml. Ukuran
+    # salah di judul bukan sekadar cacat mutu — pembeli bisa menuntut penjual.
+    angka_terlihat = set(re.findall(r"\d+", fakta or ""))
+
     simpan, dibuang = [], []
     for w in judul.split():
         bersih = re.sub(r"[^\w\.\-/]", "", w).lower()
-        if not bersih or len(bersih) < 3 or not bersih.isalpha():
-            simpan.append(w)                       # tanda baca & kode varian
-        elif bersih in dukungan or bersih in lex["jenis"]:
-            simpan.append(w)                       # ada dasarnya
-        elif bersih in lex["merek"]:
-            dibuang.append(w)                      # merek nyata, tapi bukan milik foto ini
-        elif bersih in lex.get("umum", ()):
-            simpan.append(w)                       # kata Indonesia lazim, bukan merek
+        angka_kata = re.findall(r"\d+", bersih)
+        if angka_kata and not all(a in angka_terlihat for a in angka_kata):
+            dibuang.append(w)                      # ukuran/isi/jumlah yang dikarang
+        elif not bersih or len(bersih) < 3 or not bersih.isalpha():
+            simpan.append(w)                       # tanda baca & kode varian sah
+        elif bersih in dukungan_foto or bersih in lex["jenis"]:
+            simpan.append(w)                       # terbaca di foto, atau kata jenis
+        elif bersih in lex.get("umum", ()) and bersih not in lex["merek"]:
+            # kata Indonesia lazim -> aman. Kecuali kalau ia juga nama merek:
+            # "fantech" sering muncul di katalog, tapi tetap merek milik orang lain
+            simpan.append(w)
         else:
-            dibuang.append(w)                      # istilah langka tak dikenal
+            # Kata langka. Sengaja TIDAK disahkan oleh judul tetangga: merek milik
+            # produk lain lolos lewat celah itu ("ZARA" pada gaun tanpa merek),
+            # dan kamus merek tidak bisa diandalkan menampung semua nama.
+            dibuang.append(w)
+
+    # sisa kata penghubung yang menggantung setelah penyaringan, mis. judul yang
+    # berakhir "... Gaun Floral Merek" karena penjelasnya sudah dibuang
+    while simpan and re.sub(r"\W", "", simpan[-1]).lower() in {
+            "merek", "tidak", "belum", "dan", "untuk", "dengan", "no", "brand"}:
+        simpan.pop()
     return " ".join(simpan).strip(" -/&,"), dibuang
 
 
