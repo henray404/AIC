@@ -77,7 +77,16 @@ def bangun() -> dict:
     # Kata umum: apa pun yang muncul di >=20 produk. Dipakai penjaga merek untuk
     # membedakan "kata Indonesia biasa" dari "istilah asing yang dikarang".
     # Tanpa daftar ini penjaga membuang kata sah seperti "pesta" dan "jogging".
+    #
+    # Deskripsi ikut dihitung, bukan judul saja: prosa memakai kata seperti
+    # "canggih", "elegan", "nyaman" yang hampir tak pernah muncul di judul, dan
+    # tanpa itu metrik deskripsi menandai 90% keluaran sebagai "tak berdasar".
+    per_kata_desk: dict[str, int] = defaultdict(int)
+    for d in df["description"].astype("object").fillna("").astype(str):
+        for w in set(token(d)):
+            per_kata_desk[w] += 1
     umum = {w for w, n in per_kata_produk.items() if n >= MIN_UMUM}
+    umum |= {w for w, n in per_kata_desk.items() if n >= MIN_UMUM}
     return {"merek": sorted(merek), "jenis": sorted(jenis), "umum": sorted(umum)}
 
 
