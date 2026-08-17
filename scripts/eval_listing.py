@@ -36,6 +36,21 @@ def kata(teks) -> set[str]:
     return {w.lower() for w in KATA.findall(str(teks)) if w.lower() not in STOP}
 
 
+# Klaim yang tidak boleh dikarang: penjual yang menuliskannya tanpa dasar bisa
+# kena sengketa pembeli atau teguran regulator, dan model tidak punya cara tahu
+# apakah produk di foto benar bersertifikat.
+KLAIM = re.compile(
+    r"(?i)\b(garansi|bergaransi|bpom|halal|mui|sni|fda|original|ori|asli|resmi|"
+    r"menyembuhkan|mengobati|ampuh|khasiat|terbukti|dijamin|jaminan|"
+    r"bebas efek|tanpa efek samping)\b|100\s*%")
+
+# Basa-basi lapak yang justru ingin kita buang dari dataset asli
+SAMPAH_TOKO = re.compile(
+    r"(?i)(selamat datang|happy shopping|budayakan membaca|wajib baca|"
+    r"tidak menerima komplain|no complain|gratis ongkir|ongkos kirim|bubble wrap|"
+    r"chat admin|whatsapp|\bwa\b|0[0-9]{9,12})")
+
+
 LEKSIKON = PROJECT / "data_drive" / "merged" / "lexicon.json"
 
 
@@ -58,7 +73,8 @@ def nilai(path: Path, profil: dict) -> dict:
     m: dict[str, list] = {k: [] for k in
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
                            "merek_karang", "merek_sempit", "panjang_patuh", "inti",
-                           "desk_char", "detik")}
+                           "desk_char", "desk_spek", "desk_asing", "desk_klaim",
+                           "desk_sampah", "desk_ulang", "desk_potong", "detik")}
     per_platform: dict[str, list] = {}
 
     for r in baris:
@@ -128,6 +144,25 @@ def nilai(path: Path, profil: dict) -> dict:
             m["desk_char"].append(len(str(h.get("deskripsi", ""))))
             per_platform.setdefault(plat, []).append(len(judul.split()))
 
+            # --- deskripsi: sebelumnya tidak pernah diperiksa sama sekali ---
+            desk = str(h.get("deskripsi", "")).strip()
+            if desk:
+                kd = kata(desk)
+                # ukuran/isi yang tidak terbaca di foto; katalog tidak berlaku
+                # sebagai bukti angka, sama seperti aturan pada judul
+                m["desk_spek"].append(
+                    any(a.lower() not in angka_terlihat for a in ANGKA.findall(desk)))
+                asing_d = kd - terlihat - katalog
+                if LEX:
+                    m["desk_asing"].append(
+                        any(w in LEX["merek"] or w not in LEX["umum"] for w in asing_d))
+                m["desk_klaim"].append(bool(KLAIM.search(desk)))
+                m["desk_sampah"].append(bool(SAMPAH_TOKO.search(desk)))
+                # deskripsi yang cuma mengulang judul tidak menambah apa pun
+                m["desk_ulang"].append(bool(kj) and len(kd - kj) <= 2)
+                # kalimat terpotong karena anggaran token habis
+                m["desk_potong"].append(desk[-1] not in ".!?\"'")
+
     def rata(k):
         v = m[k]
         return sum(v) / len(v) if v else float("nan")
@@ -146,6 +181,12 @@ def nilai(path: Path, profil: dict) -> dict:
         "panjang_patuh%": round(100 * rata("panjang_patuh"), 1),
         "inti": round(rata("inti"), 3),
         "desk_char": round(rata("desk_char")),
+        "desk_spek%": round(100 * rata("desk_spek"), 1),
+        "desk_asing%": round(100 * rata("desk_asing"), 1),
+        "desk_klaim%": round(100 * rata("desk_klaim"), 1),
+        "desk_sampah%": round(100 * rata("desk_sampah"), 1),
+        "desk_ulang%": round(100 * rata("desk_ulang"), 1),
+        "desk_potong%": round(100 * rata("desk_potong"), 1),
         "detik": round(rata("detik"), 1),
         "kata_judul": {k: round(st.median(v), 1) for k, v in sorted(per_platform.items())},
     }
@@ -159,13 +200,22 @@ def main():
     profil = muat_profil()
     hasil = [nilai(Path(b), profil) for b in args.berkas]
 
-    kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "harga_model_err%",
-             "spek_karang%", "merek_karang%", "merek_sempit%", "panjang_patuh%", "inti", "desk_char", "detik"]
+    kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "spek_karang%",
+             "merek_sempit%", "panjang_patuh%", "inti", "detik"]
+    kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
+                  "desk_sampah%", "desk_ulang%", "desk_potong%"]
     lebar = {k: max([len(k)] + [len(str(h[k])) for h in hasil]) for k in kunci}
     print(" | ".join(k.ljust(lebar[k]) for k in kunci))
     print("-+-".join("-" * lebar[k] for k in kunci))
     for h in hasil:
         print(" | ".join(str(h[k]).ljust(lebar[k]) for k in kunci))
+    print()
+    print("--- deskripsi ---")
+    lebar_d = {k: max([len(k)] + [len(str(h[k])) for h in hasil]) for k in kunci_desk}
+    print(" | ".join(k.ljust(lebar_d[k]) for k in kunci_desk))
+    print("-+-".join("-" * lebar_d[k] for k in kunci_desk))
+    for h in hasil:
+        print(" | ".join(str(h[k]).ljust(lebar_d[k]) for k in kunci_desk))
     print()
     for h in hasil:
         print(f"{h['berkas']}: median kata judul per platform {h['kata_judul']}")
