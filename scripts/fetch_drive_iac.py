@@ -69,7 +69,15 @@ def telusuri(sess, folder_id, prefix="", skip_images=False, only=None):
     return berkas
 
 
+# Berkas Google-native (Sheets/Docs) punya id 44 karakter dan TIDAK bisa diunduh
+# lewat usercontent; ia balas HTTP 500. Isinya selalu terduplikasi sebagai .csv
+# atau .jsonl di folder yang sama, jadi dilewati saja, bukan dilaporkan gagal.
+GOOGLE_NATIVE = 44
+
+
 def unduh(sess, path, file_id):
+    if len(file_id) >= GOOGLE_NATIVE:
+        return ("lewat", path, 0)
     tujuan = DEST / path
     if tujuan.exists() and tujuan.stat().st_size > 0:
         return ("lewat", path, tujuan.stat().st_size)
