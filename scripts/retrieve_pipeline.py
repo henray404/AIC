@@ -76,7 +76,8 @@ class Indeks:
         self.idf = {w: math.log(1 + self.n / len(post))
                     for w, post in self.inverted.items()}
 
-    def cari(self, kueri: str, k: int = 5) -> list[tuple[int, float]]:
+    def cari(self, kueri: str, k: int = 5,
+             blokir: set[int] | None = None) -> list[tuple[int, float]]:
         skor: dict[int, float] = defaultdict(float)
         for w in set(token(kueri)):
             if w not in self.inverted:
@@ -84,6 +85,9 @@ class Indeks:
             bobot = self.idf[w]
             for i, c in self.inverted[w]:
                 skor[i] += bobot * (1 + math.log(c)) / self.panjang[i]
+        if blokir:
+            for i in blokir:
+                skor.pop(i, None)
         return sorted(skor.items(), key=lambda x: -x[1])[:k]
 
 
@@ -123,9 +127,17 @@ class IndeksGambar:
             v = v / v.norm(dim=-1, keepdim=True)
         return v.cpu().numpy().astype("float32")[0]
 
-    def cari(self, path: Path, k: int = 5) -> list[tuple[str, float]]:
+    def cari(self, path: Path, k: int = 5,
+             blokir: set[str] | None = None) -> list[tuple[str, float]]:
         v = self.vektor(path)
         skor = self.emb @ v                      # vektor sudah dinormalkan
+        if blokir:
+            # ditandai sebelum diurutkan, bukan disaring sesudah: kalau seluruh
+            # kategori diblokir, menyaring setelah top-k bisa menyisakan nol hasil
+            posisi = [i for i, pid in enumerate(self.pid) if pid in blokir]
+            if posisi:
+                skor = skor.copy()
+                skor[posisi] = -1.0
         atas = self.np.argsort(-skor)[:k]
         return [(self.pid[i], float(skor[i])) for i in atas]
 
@@ -563,6 +575,13 @@ def main():
                     help="jangan buang kata bermerek yang tak didukung foto/katalog")
     ap.add_argument("--tanpa-contoh-pola", action="store_true",
                     help="jangan beri contoh judul nyata dari platform yang sama")
+    # Tingkat kebocoran yang sengaja dibuang dari indeks saat menguji satu produk.
+    # Tanpa ini, gaun "Eprise Pink" menemukan "Eprise Green" di indeks dan
+    # sistemnya nyaris menyalin — angka bagus yang tidak mewakili pemakaian nyata.
+    ap.add_argument("--eksklusi", default="diri",
+                    choices=("diri", "lini", "kategori"),
+                    help="diri: hanya produk itu | lini: + semua produk merek/lini "
+                         "yang sama | kategori: + seluruh kategorinya")
     ap.add_argument("--mode-cari", default="hibrida",
                     choices=("teks", "gambar", "hibrida"),
                     help="tetangga dicari lewat kata, kemiripan foto, atau keduanya")
@@ -584,6 +603,8 @@ def main():
     df = df[df["n_gambar_lokal"] > 0].reset_index(drop=True)
     df["title_bersih"] = [clean_title(t) for t in df["title"].astype(str)]
     df["description"] = df["description"].astype("object").fillna("").astype(str)
+    # kata pertama judul = proksi lini produk / merek ("eprise", "speeds", "opi")
+    df["lini"] = df["title_bersih"].map(lambda t: t.split()[0].lower() if t else "")
     print(f"katalog: {len(df):,} produk")
 
     indeks = Indeks(df["title_bersih"].tolist())
@@ -648,13 +669,23 @@ def main():
     fase1 = []
     for i, (idx, r) in enumerate(sampel.iterrows(), 1):
         mulai = time.time()
+        # daftar blokir dibangun per produk uji, bukan sekali di awal
+        if args.eksklusi == "kategori":
+            baris_blokir = df.index[df["kategori_umkm"] == r["kategori_umkm"]]
+        elif args.eksklusi == "lini":
+            baris_blokir = df.index[(df["lini"] == r["lini"])
+                                    | (df["product_id"] == r["product_id"])]
+        else:
+            baris_blokir = df.index[df["product_id"] == r["product_id"]]
+        blokir_baris = set(int(x) for x in baris_blokir)
+        blokir_pid = set(df.loc[list(blokir_baris), "product_id"].astype(str))
         try:
             fakta = panggil(MODEL_VISI, PROMPT_VISI,
                             images=[muat_gambar(Path(r["local_image_paths"][0]))])
             galat = ""
         except Exception as e:
             fakta, galat = "", f"{type(e).__name__}: {e}"[:150]
-        cocok = [(j, s) for j, s in indeks.cari(fakta, args.k + 1) if j != idx][:args.k]
+        cocok = indeks.cari(fakta, args.k, blokir=blokir_baris)
         skor_teratas = cocok[0][1] if cocok else 0.0
         skor_visual = None
 
@@ -662,10 +693,11 @@ def main():
             # Skor CLIP (0-1) tidak sebanding dengan skor TF-IDF (tak terbatas),
             # jadi keduanya tidak dijumlahkan. Untuk 'gambar' tetangga diganti;
             # untuk 'hibrida' hasil foto ditaruh di depan lalu sisanya dari teks.
-            visual = idx_gambar.cari(Path(r["local_image_paths"][0]), args.k + 1)
+            visual = idx_gambar.cari(Path(r["local_image_paths"][0]), args.k,
+                                     blokir=blokir_pid)
             peta = {str(v): n for n, v in enumerate(df["product_id"])}
             baris_visual = [(peta[pid], sk) for pid, sk in visual
-                            if pid in peta and peta[pid] != idx][:args.k]
+                            if pid in peta and sk > 0][:args.k]
             if baris_visual:
                 skor_visual = baris_visual[0][1]
                 if args.mode_cari == "gambar":
@@ -772,7 +804,7 @@ def main():
                 "skor_teratas": round(float(s["skor"]), 2), "pakai_konteks": bool(pakai),
                 "skor_visual": (round(float(s["skor_visual"]), 3)
                                 if s["skor_visual"] is not None else None),
-                "dikenal": bool(pakai),
+                "dikenal": bool(pakai), "eksklusi": args.eksklusi,
                 "tetangga": tetangga["title_bersih"].tolist() if len(tetangga) else [],
                 "platform": platform_list, "hasil": keluar,
                 "detik": round(s["detik"] + time.time() - mulai, 1), "galat": galat,
