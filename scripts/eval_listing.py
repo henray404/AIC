@@ -68,17 +68,50 @@ def _muat_lex() -> dict:
 LEX = _muat_lex()
 
 
-def nilai(path: Path, profil: dict, hanya: set[str] | None = None) -> dict:
+def id_berharga(path: Path) -> set[str]:
+    """product_id yang berkas ini benar-benar berani menyebutkan harganya.
+
+    Dipakai untuk menyamakan cakupan: membandingkan galat harga pipeline yang
+    mengundurkan diri di 71 dari 100 produk dengan baseline yang menjawab
+    semuanya bukan membandingkan ketepatan, melainkan membandingkan keberanian.
+    """
+    ids = set()
+    for l in path.open(encoding="utf-8"):
+        if not l.strip():
+            continue
+        r = json.loads(l)
+        hasil = r.get("hasil", {})
+        if hasil and not any(isinstance(v, dict) for v in hasil.values()):
+            hasil = {"umum": hasil}
+        for h in hasil.values():
+            if not isinstance(h, dict):
+                continue
+            try:
+                if float(h.get("perkiraan_harga") or 0) > 0:
+                    ids.add(str(r.get("product_id")))
+                    break
+            except (TypeError, ValueError):
+                pass
+    return ids
+
+
+def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
+          hanya_id: set[str] | None = None) -> dict:
     baris = [json.loads(l) for l in path.open(encoding="utf-8")]
     m: dict[str, list] = {k: [] for k in
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
                            "merek_karang", "merek_sempit", "merek_ketat",
-                           "panjang_patuh", "inti",
+                           "harga_cakupan", "panjang_patuh", "inti",
                            "desk_char", "desk_spek", "desk_asing", "desk_klaim",
                            "desk_sampah", "desk_ulang", "desk_potong", "detik")}
     per_platform: dict[str, list] = {}
+    n_listing_penuh = 0      # sebelum saringan platform; penyebut detik/listing
+    n_baris_dipakai = 0      # baris yang lolos --samakan-cakupan
 
     for r in baris:
+        if hanya_id is not None and str(r.get("product_id")) not in hanya_id:
+            continue
+        n_baris_dipakai += 1
         hasil = r.get("hasil", {})
         # bentuk lama: satu listing langsung; bentuk baru: dict per platform
         if hasil and not any(isinstance(v, dict) for v in hasil.values()):
@@ -92,6 +125,7 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None) -> dict:
         for plat, h in hasil.items():
             if not isinstance(h, dict):
                 continue
+            n_listing_penuh += 1
             if hanya and plat not in hanya:
                 continue
             valid = "_mentah" not in h and bool(h.get("judul"))
@@ -138,6 +172,13 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None) -> dict:
             # Tokopedia — jadi menghukumnya karena tidak sama dengan harga asli
             # justru menghukum perilaku yang benar.
             # shopee sengaja 0 (tidak punya data harga) -> juga tidak dihitung.
+            if asli > 0 and plat in (r.get("source"), "umum"):
+                # Cakupan dicatat terpisah dari galat. Pipeline menyetel harga 0
+                # untuk barang yang tidak dikenalnya, jadi baris itu keluar dari
+                # harga_err -- ia mengundurkan diri dari kasus sulit lalu dinilai
+                # di kasus mudah. Tanpa kolom cakupan, penarikan diri itu tidak
+                # terlihat sama sekali dan galatnya tampak lebih baik dari nyatanya.
+                m["harga_cakupan"].append(harga > 0)
             if harga > 0 and asli > 0 and plat in (r.get("source"), "umum"):
                 m["harga_err"].append(abs(harga - asli) / asli)
                 # tebakan mentah model, disimpan sebelum ditimpa hitungan katalog
@@ -189,6 +230,8 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None) -> dict:
         "n_listing": len(m["json_valid"]),
         "json_valid%": round(100 * rata("json_valid"), 1),
         "harga_err%": round(100 * st.median(m["harga_err"]), 1) if m["harga_err"] else float("nan"),
+        "harga_cakupan%": round(100 * rata("harga_cakupan"), 1),
+        "n_harga": len(m["harga_err"]),
         "harga_model_err%": (round(100 * st.median(m["harga_model_err"]), 1)
                              if m["harga_model_err"] else float("nan")),
         "spek_karang%": round(100 * rata("spek_karang"), 1),
@@ -205,6 +248,14 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None) -> dict:
         "desk_ulang%": round(100 * rata("desk_ulang"), 1),
         "desk_potong%": round(100 * rata("desk_potong"), 1),
         "detik": round(rata("detik"), 1),
+        # detik dicatat per PRODUK, sedangkan tiap produk menghasilkan beberapa
+        # listing -- dan jumlahnya berbeda antar berkas (pipeline mengikuti
+        # platform_profiles.json, baseline mengunci tiga). Membandingkan detik
+        # per produk berarti membandingkan dua satuan yang berbeda. Penyebutnya
+        # dihitung sebelum --hanya-platform, karena menyaring platform saat
+        # menilai tidak membuat pekerjaannya jadi lebih sedikit.
+        "detik_listing": (round(rata("detik") / (n_listing_penuh / n_baris_dipakai), 2)
+                          if n_baris_dipakai and n_listing_penuh else float("nan")),
         "kata_judul": {k: round(st.median(v), 1) for k, v in sorted(per_platform.items())},
     }
 
@@ -216,18 +267,28 @@ def main():
                     help="nilai hanya platform ini, dipisah koma. Perlu kalau dua "
                          "berkas menulis himpunan platform yang berbeda — tanpa ini "
                          "keduanya dibandingkan atas dasar yang tidak sama.")
+    ap.add_argument("--samakan-cakupan", default=None, metavar="BERKAS",
+                    help="nilai semua berkas hanya pada produk yang BERKAS ini "
+                         "berani beri harga. Perlu karena pipeline mengundurkan "
+                         "diri dari barang tak dikenal, jadi harga_err-nya diukur "
+                         "di kasus mudah saja sementara baseline menjawab semua.")
     args = ap.parse_args()
 
     hanya = ({p.strip() for p in args.hanya_platform.split(",")}
              if args.hanya_platform else None)
+    hanya_id = id_berharga(Path(args.samakan_cakupan)) if args.samakan_cakupan else None
     profil = muat_profil()
-    hasil = [nilai(Path(b), profil, hanya) for b in args.berkas]
+    hasil = [nilai(Path(b), profil, hanya, hanya_id) for b in args.berkas]
+    if hanya_id is not None:
+        print(f"cakupan disamakan ke {Path(args.samakan_cakupan).name}: "
+              f"{len(hanya_id)} produk")
     if hanya:
         print(f"platform dinilai: {sorted(hanya)}")
         print()
 
     kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "spek_karang%",
-             "merek_sempit%", "merek_ketat%", "panjang_patuh%", "inti", "detik"]
+             "harga_cakupan%", "n_harga", "merek_sempit%", "merek_ketat%",
+             "panjang_patuh%", "inti", "detik", "detik_listing"]
     kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
                   "desk_sampah%", "desk_ulang%", "desk_potong%"]
     lebar = {k: max([len(k)] + [len(str(h[k])) for h in hasil]) for k in kunci}
@@ -247,5 +308,53 @@ def main():
         print(f"{h['berkas']}: median kata judul per platform {h['kata_judul']}")
 
 
+def _selfcheck():
+    """Dua artefak yang pernah membuat pipeline menang tanpa mengukur apa pun."""
+    import tempfile
+
+    def rec(pid, harga, plats, detik):
+        return {"product_id": pid, "source": "tokopedia", "judul_asli": "Botol Minum",
+                "harga_asli": 100, "kategori_asli": "kriya_rumah", "vlm": "botol minum",
+                "tetangga": [], "detik": detik,
+                "hasil": {p: {"judul": "Botol Minum", "deskripsi": "Botol minum praktis.",
+                              "perkiraan_harga": harga} for p in plats}}
+
+    def tulis(d, nama, baris):
+        p = Path(d) / nama
+        p.write_text(chr(10).join(json.dumps(r) for r in baris), encoding="utf-8")
+        return p
+
+    with tempfile.TemporaryDirectory() as d:
+        dua = ["blibli", "tokopedia"]
+        # (1) penarikan diri: pipeline hanya menjawab produk 'a', dan tepat.
+        # Baseline menjawab semuanya dan meleset di dua yang sulit.
+        pipe = tulis(d, "pipe.jsonl", [rec("a", 100, dua, 3.0),
+                                       rec("b", 0, dua, 3.0), rec("c", 0, dua, 3.0)])
+        base = tulis(d, "base.jsonl", [rec("a", 100, dua, 6.0),
+                                       rec("b", 300, dua, 6.0), rec("c", 400, dua, 6.0)])
+        hp, hb = nilai(pipe, {}), nilai(base, {})
+        assert hp["harga_err%"] == 0.0 and hb["harga_err%"] == 200.0, (hp, hb)
+        assert hp["harga_cakupan%"] == 33.3 and hb["harga_cakupan%"] == 100.0, (hp, hb)
+        # cakupan disamakan -> selisih 200 poin tadi lenyap seluruhnya
+        ids = id_berharga(pipe)
+        assert ids == {"a"}, ids
+        hp2, hb2 = nilai(pipe, {}, None, ids), nilai(base, {}, None, ids)
+        assert hp2["harga_err%"] == hb2["harga_err%"] == 0.0, (hp2, hb2)
+
+        # (2) detik per listing tidak boleh berubah karena saringan platform:
+        # menyaring saat menilai tidak membuat pekerjaannya jadi lebih sedikit.
+        tiga = ["blibli", "tokopedia", "shopee"]
+        p2 = tulis(d, "p2.jsonl", [rec(x, 100, dua, 3.0) for x in "abc"])
+        b3 = tulis(d, "b3.jsonl", [rec(x, 100, tiga, 6.0) for x in "abc"])
+        assert nilai(p2, {})["detik_listing"] == 1.5
+        assert nilai(b3, {})["detik_listing"] == 2.0
+        assert nilai(b3, {}, {"blibli", "tokopedia"})["detik_listing"] == 2.0
+    print("selfcheck ok")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if "--selfcheck" in sys.argv:
+        _selfcheck()
+    else:
+        main()
