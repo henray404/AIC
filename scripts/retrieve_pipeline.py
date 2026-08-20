@@ -87,6 +87,49 @@ class Indeks:
         return sorted(skor.items(), key=lambda x: -x[1])[:k]
 
 
+INDEKS_GAMBAR = PROJECT / "data_drive" / "merged" / "image_index.npz"
+
+
+class IndeksGambar:
+    """Pencarian tetangga lewat kemiripan visual, bukan kata.
+
+    Pencarian teks menemukan jenis barang yang benar tapi salah kelas harga:
+    gaun Eprise Rp479.800 ditetanggai gaun pasar karena kata-katanya sama.
+    Foto membedakan keduanya; teks tidak bisa.
+
+    Dimuat malas — kalau berkas indeksnya belum dibuat, pipeline tetap jalan
+    dengan pencarian teks saja.
+    """
+
+    def __init__(self, path: Path = INDEKS_GAMBAR):
+        import numpy as np
+        import torch
+        import open_clip
+
+        d = np.load(path, allow_pickle=True)
+        self.emb = d["emb"].astype("float32")
+        self.pid = list(d["pid"])
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model, _, self.preprocess = open_clip.create_model_and_transforms(
+            "ViT-B-32", pretrained="laion2b_s34b_b79k", device=self.device)
+        self.model.eval()
+        self.torch, self.np = torch, np
+
+    def vektor(self, path: Path):
+        with Image.open(path) as im:
+            x = self.preprocess(im.convert("RGB")).unsqueeze(0).to(self.device)
+        with self.torch.no_grad():
+            v = self.model.encode_image(x)
+            v = v / v.norm(dim=-1, keepdim=True)
+        return v.cpu().numpy().astype("float32")[0]
+
+    def cari(self, path: Path, k: int = 5) -> list[tuple[str, float]]:
+        v = self.vektor(path)
+        skor = self.emb @ v                      # vektor sudah dinormalkan
+        atas = self.np.argsort(-skor)[:k]
+        return [(self.pid[i], float(skor[i])) for i in atas]
+
+
 def bersih_deskripsi(teks: str, maks: int = 320) -> str:
     kalimat = [s.strip() for s in re.split(r"[.\n]+", str(teks)) if s.strip()]
     baik = [s for s in kalimat if not SAMPAH.search(s)]
@@ -503,7 +546,12 @@ def main():
     ap.add_argument("--k", type=int, default=5, help="berapa tetangga diambil")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--min-skor", type=float, default=2.0,
-                    help="di bawah ini konteks katalog tidak dipakai sama sekali")
+                    help="ambang skor teks; di bawah ini konteks katalog tidak dipakai")
+    # Ambang dari sebaran nyata: produk yang punya padanan di katalog semuanya
+    # >=0,91, yang tidak punya jatuh di 0,67-0,77. Jurangnya lebar di sekitar 0,80.
+    ap.add_argument("--ambang-visual", type=float, default=0.80,
+                    help="di bawah ini barang dianggap ASING: tulis hanya dari foto, "
+                         "tanpa merek dan harga dari katalog")
     ap.add_argument("--platform", default=None,
                     help="blibli | tokopedia | shopee | all (satu foto, satu listing per platform)")
     ap.add_argument("--hanya-cari", default=None,
@@ -515,6 +563,9 @@ def main():
                     help="jangan buang kata bermerek yang tak didukung foto/katalog")
     ap.add_argument("--tanpa-contoh-pola", action="store_true",
                     help="jangan beri contoh judul nyata dari platform yang sama")
+    ap.add_argument("--mode-cari", default="hibrida",
+                    choices=("teks", "gambar", "hibrida"),
+                    help="tetangga dicari lewat kata, kemiripan foto, atau keduanya")
     ap.add_argument("--desk-mode", default="kombinasi",
                     choices=("none", "kalimat", "tulis-ulang", "prompt", "kombinasi"),
                     help="cara menangani pelanggaran di deskripsi. Bawaan 'kombinasi': "
@@ -544,6 +595,16 @@ def main():
             print(f"  {s:6.2f}  {r['title_bersih'][:70]}  | {r['kategori_umkm']} | "
                   f"Rp{int(r['price']):,}")
         return
+
+    idx_gambar = None
+    if args.mode_cari in ("gambar", "hibrida"):
+        if INDEKS_GAMBAR.exists():
+            idx_gambar = IndeksGambar()
+            print(f"indeks gambar: {len(idx_gambar.pid):,} produk, "
+                  f"perangkat {idx_gambar.device}")
+        else:
+            print(f"peringatan: {INDEKS_GAMBAR} belum ada — "
+                  "jalankan scripts/build_image_index.py dulu; pakai pencarian teks")
 
     profil = muat_profil()
     lex = muat_lexicon()
@@ -595,14 +656,40 @@ def main():
             fakta, galat = "", f"{type(e).__name__}: {e}"[:150]
         cocok = [(j, s) for j, s in indeks.cari(fakta, args.k + 1) if j != idx][:args.k]
         skor_teratas = cocok[0][1] if cocok else 0.0
-        pakai = skor_teratas >= args.min_skor
+        skor_visual = None
+
+        if idx_gambar is not None:
+            # Skor CLIP (0-1) tidak sebanding dengan skor TF-IDF (tak terbatas),
+            # jadi keduanya tidak dijumlahkan. Untuk 'gambar' tetangga diganti;
+            # untuk 'hibrida' hasil foto ditaruh di depan lalu sisanya dari teks.
+            visual = idx_gambar.cari(Path(r["local_image_paths"][0]), args.k + 1)
+            peta = {str(v): n for n, v in enumerate(df["product_id"])}
+            baris_visual = [(peta[pid], sk) for pid, sk in visual
+                            if pid in peta and peta[pid] != idx][:args.k]
+            if baris_visual:
+                skor_visual = baris_visual[0][1]
+                if args.mode_cari == "gambar":
+                    cocok = baris_visual
+                else:
+                    ada = {j for j, _ in baris_visual}
+                    cocok = (baris_visual + [(j, sk) for j, sk in cocok
+                                             if j not in ada])[:args.k]
+        # Barang asing: kalau tidak ada padanan visual yang meyakinkan, konteks
+        # katalog justru berbahaya — dari situ lahir "Tas Longchamp" dan
+        # "teknologi altraze", merek yang dipinjam dari produk yang kebetulan
+        # mirip rupanya. Lebih baik menulis apa adanya dari foto.
+        if skor_visual is not None:
+            pakai = skor_visual >= args.ambang_visual
+        else:
+            pakai = skor_teratas >= args.min_skor
         tetangga = df.iloc[[j for j, _ in cocok]] if pakai else df.iloc[[]]
         kat_modus = None
         if pakai and len(tetangga):
             mm = tetangga["kategori_umkm"].mode()
             kat_modus = str(mm.iloc[0]) if len(mm) else None
         fase1.append(dict(r=r, fakta=fakta, tetangga=tetangga, pakai=pakai,
-                          skor=skor_teratas, kat=kat_modus, galat=galat,
+                          skor=skor_teratas, skor_visual=skor_visual,
+                          kat=kat_modus, galat=galat,
                           detik=time.time() - mulai))
         print(f"[lihat {i}/{len(sampel)}] {time.time() - mulai:.1f}s  {fakta[:48]}")
     print(f"fase 1 selesai: {time.time() - t0:.0f}s\n")
@@ -627,6 +714,13 @@ def main():
                     h, galat = {}, f"{type(e).__name__}: {e}"[:150]
                 if isinstance(h, dict) and h and "_mentah" not in h:
                     h["harga_model"] = h.get("perkiraan_harga")
+                    if not pakai:
+                        # barang asing: tidak ada pembanding, jadi tidak ada dasar
+                        # untuk menyebut harga sama sekali
+                        h["perkiraan_harga"] = 0
+                        h["catatan"] = ("produk belum ada padanannya di katalog; "
+                                        "judul & deskripsi murni dari foto, "
+                                        "harga perlu ditentukan penjual")
                     hitung = (None if args.tanpa_harga_hitung else
                               harga_deterministik(tetangga if pakai else None, profil,
                                                   plat, s["kat"], faktor_global))
@@ -676,6 +770,9 @@ def main():
                 "judul_asli": r["title_bersih"], "harga_asli": int(r["price"]),
                 "kategori_asli": r["kategori_umkm"], "vlm": fakta,
                 "skor_teratas": round(float(s["skor"]), 2), "pakai_konteks": bool(pakai),
+                "skor_visual": (round(float(s["skor_visual"]), 3)
+                                if s["skor_visual"] is not None else None),
+                "dikenal": bool(pakai),
                 "tetangga": tetangga["title_bersih"].tolist() if len(tetangga) else [],
                 "platform": platform_list, "hasil": keluar,
                 "detik": round(s["detik"] + time.time() - mulai, 1), "galat": galat,
