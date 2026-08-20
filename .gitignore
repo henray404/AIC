@@ -32,3 +32,6 @@ venv/
 
 # Notebooks
 .ipynb_checkpoints/
+
+# Paket kirim ke server sewaan (hasil generasi, bisa dibuat ulang)
+hasil_sesi1/
