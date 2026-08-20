@@ -9,7 +9,12 @@ mkdir -p data_drive/eval hasil
 
 jalan () {  # $1 nama berkas, $2.. argumen
   local out="data_drive/eval/$1"; shift
-  if [ -s "$out" ]; then echo "  lewat (sudah ada): $out"; return; fi
+  # Hitung baris, bukan sekadar keberadaan berkas. Sesi yang terputus di
+  # tengah meninggalkan berkas separuh terisi; penjaga lama menganggapnya
+  # selesai, dan eval membandingkan 100 baris lawan 50 tanpa protes.
+  if [ "$(wc -l < "$out" 2>/dev/null || echo 0)" -ge "$N" ]; then
+    echo "  lewat (lengkap): $out"; return
+  fi
   echo "=== $out"
   for iris in 0:25 25:50 50:75 75:100; do
     $PY "$@" --n "$N" --iris "$iris" --keluaran "$out"
