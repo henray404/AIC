@@ -409,13 +409,25 @@ def tulis_ulang_deskripsi(desk: str, salah: list[str], fakta: str) -> str:
 
 
 def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
-                     plat: str | None, lex: dict) -> tuple[str, list[str]]:
+                     plat: str | None, lex: dict,
+                     izinkan_merek: bool = False) -> tuple[str, list[str]]:
     """Tambahkan kata kunci pendukung sampai judul mencapai panjang lazim platform.
 
     Tokopedia median 15 kata, tapi model 4B/7B tetap menulis 6 kata betapapun
     dimintanya — tiga putaran prompt tidak menggesernya. Jadi dikerjakan di luar
-    model: kata diambil dari judul produk kembar di katalog, yang menurut definisi
-    sudah didukung bukti, jadi tidak menambah risiko halusinasi.
+    model: kata diambil dari judul produk kembar di katalog.
+
+    Versi awal fungsi ini mengklaim penambahan itu "tidak menambah risiko
+    halusinasi karena sudah didukung bukti". Klaim itu salah, dan sesi 1
+    membantahnya: didukung KATALOG bukan berarti didukung FOTO. Pada produk
+    yang retrievalnya aktif, merek_ketat% pipeline naik ke 17,2% dan melewati
+    baseline 11,5% — kata yang dipinjam dari tetangga menyatakan hal yang tidak
+    terlihat di foto produknya sendiri.
+
+    Nama merek yang paling berbahaya, karena merek tetangga selalu milik produk
+    lain, tidak pernah milik produk ini. Sekarang disaring. `izinkan_merek`
+    mengembalikan perilaku lama, dan ada hanya supaya keduanya bisa dibandingkan
+    dalam satu tabel ablasi.
     """
     if not plat or tetangga is None or not len(tetangga):
         return judul, []
@@ -432,8 +444,10 @@ def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
     for t in tetangga["title_bersih"]:
         for w in set(token(t)):
             hitung[w] += 1
+    merek = lex.get("merek", set())
     kandidat = [w for w, c in sorted(hitung.items(), key=lambda x: -x[1])
-                if c >= 2 and w not in ada and w.isalpha() and len(w) > 2]
+                if c >= 2 and w not in ada and w.isalpha() and len(w) > 2
+                and (izinkan_merek or w not in merek)]
 
     tambah = []
     kata = judul.split()
@@ -596,6 +610,10 @@ def main():
     # Irisan dipakai supaya satu konfigurasi bisa dikerjakan beberapa kali tanpa
     # mengubah sampelnya: seed sama -> urutan sama -> potongan a:b selalu produk
     # yang sama. Perlu karena satu run penuh kena batas waktu proses latar.
+    ap.add_argument("--panjangkan-merek", action="store_true",
+                    help="izinkan nama merek tetangga ikut ditambahkan saat "
+                         "memanjangkan judul (perilaku lama, terbukti menyuntikkan "
+                         "merek milik produk lain — untuk ablasi saja)")
     ap.add_argument("--iris", default=None, help="proses sebagian sampel saja, mis. 0:5")
     args = ap.parse_args()
 
@@ -790,7 +808,7 @@ def main():
                     if args.panjangkan and h.get("judul"):
                         panjang, tambah = panjangkan_judul(
                             str(h["judul"]), tetangga if pakai else None,
-                            profil, plat, lex)
+                            profil, plat, lex, args.panjangkan_merek)
                         if tambah:
                             h.setdefault("judul_mentah", h["judul"])
                             h["ditambah"] = tambah
