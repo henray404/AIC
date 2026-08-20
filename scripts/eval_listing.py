@@ -72,7 +72,8 @@ def nilai(path: Path, profil: dict) -> dict:
     baris = [json.loads(l) for l in path.open(encoding="utf-8")]
     m: dict[str, list] = {k: [] for k in
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
-                           "merek_karang", "merek_sempit", "panjang_patuh", "inti",
+                           "merek_karang", "merek_sempit", "merek_ketat",
+                           "panjang_patuh", "inti",
                            "desk_char", "desk_spek", "desk_asing", "desk_klaim",
                            "desk_sampah", "desk_ulang", "desk_potong", "detik")}
     per_platform: dict[str, list] = {}
@@ -103,6 +104,11 @@ def nilai(path: Path, profil: dict) -> dict:
             m["spek_karang"].append(bool(karang_angka))
             asing = kj - terlihat - katalog
             m["merek_karang"].append(bool(asing))
+            # Ukuran ketat: hanya bukti penglihatan yang memaafkan, katalog tidak.
+            # Pipeline punya katalog, baseline tidak — ukuran yang ikut memaafkan
+            # lewat katalog memberi pipeline keringanan yang lawannya tidak punya
+            # akses ke sana. Angka ini satu-satunya yang dibandingkan setara.
+            m["merek_ketat"].append(bool(kj - terlihat))
             # Ukuran sempit: dari kata tak berdasar, hanya hitung yang benar-benar
             # bermasalah — nama merek nyata milik produk lain, atau istilah langka
             # yang tidak ada di kosakata katalog. Ukuran lebar di atas menghukum
@@ -178,6 +184,7 @@ def nilai(path: Path, profil: dict) -> dict:
         "spek_karang%": round(100 * rata("spek_karang"), 1),
         "merek_karang%": round(100 * rata("merek_karang"), 1),
         "merek_sempit%": round(100 * rata("merek_sempit"), 1),
+        "merek_ketat%": round(100 * rata("merek_ketat"), 1),
         "panjang_patuh%": round(100 * rata("panjang_patuh"), 1),
         "inti": round(rata("inti"), 3),
         "desk_char": round(rata("desk_char")),
