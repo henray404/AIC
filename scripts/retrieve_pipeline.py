@@ -222,6 +222,7 @@ ATURAN = (
     "- DILARANG menyebut ukuran, isi, berat, rasa, varian, atau nomor model "
     "kecuali benar-benar terbaca di foto.\n"
     "- Jangan mengarang garansi, izin BPOM, atau klaim khasiat.\n"
+    "{LARANGAN_TAMBAHAN}"
     "- Kalau merek tidak terbaca di foto, jangan sebut merek apa pun.\n\n"
     'Jawab JSON: {"judul": "...", "deskripsi": "...", "kategori": "...", '
     '"perkiraan_harga": 0}'
@@ -297,6 +298,59 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
             "merek", "tidak", "belum", "dan", "untuk", "dengan", "no", "brand"}:
         simpan.pop()
     return " ".join(simpan).strip(" -/&,"), dibuang
+
+
+# Daftar sisi-generator. `eval_listing.py` menyimpan daftarnya sendiri dengan
+# sengaja: kalau keduanya berbagi satu berkas, penyaring dan pengukurnya jadi
+# sirkular — apa pun yang lupa dilarang otomatis lolos juga dari penilaian.
+KLAIM_TERLARANG = re.compile(
+    r"(?i)\b(garansi|bergaransi|bpom|halal|mui|sni|fda|original|ori|asli|resmi|"
+    r"menyembuhkan|mengobati|ampuh|khasiat|terbukti|dijamin|jaminan)\b|100\s*%")
+
+
+def pelanggaran_deskripsi(desk: str, fakta: str, tetangga: pd.DataFrame | None,
+                          lex: dict) -> list[str]:
+    """Daftar hal bermasalah di deskripsi: klaim, angka karangan, istilah asing."""
+    if not desk:
+        return []
+    salah = [m.group(0) for m in KLAIM_TERLARANG.finditer(desk)]
+
+    angka_foto = set(re.findall(r"\d+", fakta or ""))
+    salah += [a for a in re.findall(r"\d+", desk) if a not in angka_foto]
+
+    if lex:
+        dukungan = set(token(fakta))
+        if tetangga is not None and len(tetangga):
+            for t in tetangga["title_bersih"]:
+                dukungan |= set(token(t))
+        salah += [w for w in token(desk)
+                  if w.isalpha() and w not in dukungan
+                  and (w in lex["merek"] or w not in lex.get("umum", ()))]
+    return sorted(set(salah))
+
+
+def saring_kalimat(desk: str, fakta: str, tetangga: pd.DataFrame | None,
+                   lex: dict) -> str:
+    """Cara (a): buang kalimat yang memuat pelanggaran, sisanya dibiarkan utuh."""
+    kalimat = [s for s in re.split(r"(?<=[.!?])\s+", desk) if s.strip()]
+    aman = [s for s in kalimat if not pelanggaran_deskripsi(s, fakta, tetangga, lex)]
+    return " ".join(aman).strip()
+
+
+def tulis_ulang_deskripsi(desk: str, salah: list[str], fakta: str) -> str:
+    """Cara (b): minta model menulis ulang, pelanggarannya disebut satu per satu."""
+    prompt = (
+        f"Deskripsi produk ini memuat hal yang tidak boleh ada: {', '.join(salah)}.\n\n"
+        f"Yang benar-benar terlihat di foto: {fakta}\n"
+        f"Deskripsi lama: {desk}\n\n"
+        "Tulis ulang jadi 2-3 kalimat menarik TANPA kata-kata bermasalah itu, "
+        "tanpa menyebut ukuran, merek, sertifikasi, atau khasiat yang tidak "
+        'terlihat di foto. Jawab JSON: {"deskripsi": "..."}')
+    try:
+        mentah = panggil(MODEL_TEKS, prompt, num_predict=250, minta_json=True)
+        return str(json.loads(mentah).get("deskripsi", "")).strip() or desk
+    except Exception:
+        return desk
 
 
 def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
@@ -400,9 +454,19 @@ def contoh_pola(idx_platform: dict, plat: str | None, fakta: str, n: int = 2) ->
     return [samar_angka(judul[i]) for i, _ in indeks.cari(fakta, n)]
 
 
+# Cara (c): larangan diperluas dan disebut satu per satu. Versi lama hanya
+# menyebut "garansi, BPOM, khasiat" secara umum, dan kata seperti "ampuh" atau
+# "terbukti" lolos karena tidak ada di daftar.
+LARANGAN_KATA = (
+    "- DILARANG memakai kata: ampuh, khasiat, terbukti, dijamin, original, asli, "
+    "resmi, halal, BPOM, SNI, garansi, menyembuhkan, mengobati, 100%.\n"
+    "- Di deskripsi pun jangan sebut merek yang tidak terbaca di foto.\n")
+
+
 def susun_prompt(fakta: str, tetangga: pd.DataFrame | None,
                  profil: dict | None = None, platform: str | None = None,
-                 idx_platform: dict | None = None) -> str:
+                 idx_platform: dict | None = None,
+                 larangan: bool = False) -> str:
     kepala = ("Kamu penulis listing marketplace Indonesia.\n\n"
               f"Yang terlihat di foto produk: {fakta}\n\n")
 
@@ -425,10 +489,12 @@ def susun_prompt(fakta: str, tetangga: pd.DataFrame | None,
                           "susunannya, JANGAN salin produknya (angka sudah disamarkan):\n"
                           + "\n".join(f"  - {p}" for p in pola))
 
+    aturan_akhir = ATURAN.replace("{LARANGAN_TAMBAHAN}",
+                                  LARANGAN_KATA if larangan else "")
     if not bagian:
         # tetangga terlalu jauh: lebih baik keluaran umum daripada salah meyakinkan
-        return kepala + ATURAN
-    return kepala + "\n\n".join(bagian) + "\n\n" + ATURAN
+        return kepala + aturan_akhir
+    return kepala + "\n\n".join(bagian) + "\n\n" + aturan_akhir
 
 
 def main():
@@ -449,6 +515,11 @@ def main():
                     help="jangan buang kata bermerek yang tak didukung foto/katalog")
     ap.add_argument("--tanpa-contoh-pola", action="store_true",
                     help="jangan beri contoh judul nyata dari platform yang sama")
+    ap.add_argument("--desk-mode", default="kombinasi",
+                    choices=("none", "kalimat", "tulis-ulang", "prompt", "kombinasi"),
+                    help="cara menangani pelanggaran di deskripsi. Bawaan 'kombinasi': "
+                         "larangan di prompt, lalu tulis ulang, lalu buang kalimat "
+                         "kalau masih melanggar")
     ap.add_argument("--panjangkan", action="store_true",
                     help="tambah kata kunci dari katalog sampai judul mencapai panjang lazim")
     ap.add_argument("--keluaran", default=None, help="tulis ke berkas ini")
@@ -547,7 +618,7 @@ def main():
                     mentah = panggil(
                         MODEL_TEKS,
                         susun_prompt(fakta, tetangga if pakai else None, profil, plat,
-                                     idx_platform),
+                                     idx_platform, larangan=args.desk_mode in ("prompt", "kombinasi")),
                         num_predict=400, minta_json=True)
                     h = json.loads(mentah)
                 except json.JSONDecodeError:
@@ -568,6 +639,28 @@ def main():
                             h["judul_mentah"] = h["judul"]
                             h["dibuang"] = dibuang
                             h["judul"] = bersih
+                    if args.desk_mode != "none" and h.get("deskripsi"):
+                        tet = tetangga if pakai else None
+                        desk = str(h["deskripsi"])
+                        salah = pelanggaran_deskripsi(desk, fakta, tet, lex)
+                        if salah and args.desk_mode != "prompt":
+                            h["deskripsi_mentah"] = desk
+                            h["desk_salah"] = salah
+                            if args.desk_mode == "kalimat":
+                                h["deskripsi"] = saring_kalimat(desk, fakta, tet, lex)
+                            else:
+                                baru = tulis_ulang_deskripsi(desk, salah, fakta)
+                                # Kombinasi: tulis ulang dulu supaya isinya utuh, lalu
+                                # periksa lagi. Model kecil kadang mengulang pelanggaran
+                                # yang sama; kalau begitu kalimatnya baru dibuang, jadi
+                                # jaminannya tetap mutlak seperti cara (a).
+                                if args.desk_mode == "kombinasi":
+                                    sisa = pelanggaran_deskripsi(baru, fakta, tet, lex)
+                                    if sisa:
+                                        h["desk_sisa"] = sisa
+                                        baru = (saring_kalimat(baru, fakta, tet, lex)
+                                                or saring_kalimat(desk, fakta, tet, lex))
+                                h["deskripsi"] = baru
                     if args.panjangkan and h.get("judul"):
                         panjang, tambah = panjangkan_judul(
                             str(h["judul"]), tetangga if pakai else None,
