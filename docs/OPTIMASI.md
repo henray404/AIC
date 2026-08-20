@@ -244,3 +244,121 @@ python scripts/eval_listing.py data_drive/eval/A.jsonl data_drive/eval/B.jsonl
 
 `--iris` memecah satu sampel jadi beberapa jalan tanpa mengubah isinya: seed sama,
 urutan sama, jadi potongan `0:5` selalu produk yang sama.
+
+---
+
+# Sesi 1 — pembanding model besar, 100 produk
+
+Dijalankan 21 Agustus 2026 pada GPU sewaan (RTX 4090, 24 GB). Sampel sama untuk
+kedua sisi: `--n 100 --seed 7`, sumber dan penyaringan identik, jadi `product_id`
+cocok satu-satu. Baseline `gemma3:12b` sendirian tanpa retrieval, tanpa katalog,
+tanpa penjaga — tepat 3× parameter `gemma3:4b` yang dipakai pipeline, satu
+keluarga model supaya selisihnya berasal dari ukuran, bukan dari data latih.
+
+Bagian ini menggantikan angka mana pun di atas yang bertentangan dengannya:
+tabel A–M dijalankan pada 10 produk dan tanpa penyamaan cakupan.
+
+## Tiga cacat pengukuran yang ditemukan lebih dulu
+
+Ketiganya berpihak pada pipeline. Semuanya ditemukan dengan membaca kode
+penilaian, bukan dari tabelnya — tabel yang salah tidak terlihat salah.
+
+1. **Baseline dinilai tanpa bukti penglihatan.** `baseline_besar.py` menulis
+   `vlm: ""`, dan `eval_listing.py` menghitung karangan sebagai
+   `kata(judul) - kata(vlm) - kata(tetangga)`. Bukti kosong membuat seluruh kata
+   judul terhitung karangan; baseline akan mencatat halusinasi 100% karena satu
+   kolom kosong, bukan karena mutunya. Diperbaiki `patch_baseline_vlm.py`, yang
+   menyalin bacaan penglihatan dari berkas pipeline lewat `product_id`.
+
+2. **Cakupan tidak sama.** Pipeline menyetel `perkiraan_harga = 0` untuk barang
+   tak dikenal, dan baris itu keluar dari `harga_err`. Pada tingkat `lini`,
+   71 dari 100 produk berstatus `dikenal: false` — galat harga diukur di 29
+   produk termudah sementara baseline menjawab semuanya. Ditambahkan
+   `harga_cakupan%` dan `--samakan-cakupan`.
+
+3. **Satuan waktu berbeda.** `detik` dicatat per produk, tapi pipeline menulis
+   2 platform dan baseline 3. Ditambahkan `detik_listing`.
+
+## Hasil, cakupan disamakan ke tingkat `lini` (29 produk)
+
+| | merek_ketat% | harga_err% | inti | panjang_patuh% | detik_listing |
+|---|---|---|---|---|---|
+| pipeline (merek tetangga disaring) | **8,6** | **33,1** | **0,410** | 79,3 | **1,43** |
+| pipeline (perilaku lama) | 17,2 | 33,1 | 0,407 | 82,8 | 1,35 |
+| baseline gemma3:12b | 11,5 | 53,3 | 0,229 | 51,7 | 2,12 |
+
+`merek_ketat%` adalah satu-satunya ukuran halusinasi yang setara: hanya bacaan
+penglihatan yang memaafkan, katalog tidak — dan katalog cuma dipunyai pipeline.
+
+**`merek_sempit%` 0% tidak boleh dikutip sebagai bukti.** Angka itu melingkar:
+`saring_merek` membuang kata yang tidak didukung `fakta` atau `tetangga`, dan
+`merek_sempit` mengukur kata yang tidak didukung `fakta` atau `tetangga`. Nolnya
+dijamin konstruksi.
+
+## Apa yang berdiri dan apa yang gugur
+
+| klaim | status |
+|---|---|
+| harga ~1,6× lebih akurat | berdiri — 33,1% lawan 53,3% pada 29 produk yang sama |
+| ~1,5× lebih cepat per listing | berdiri — 1,43 lawan 2,12 detik |
+| deskripsi bebas kata asing | berdiri — 0,0% lawan 24,7%, dijamin penjaga |
+| judul lebih cocok produk aslinya | berdiri — inti 0,410 lawan 0,229 |
+| "hampir tanpa halusinasi merek" | **gugur** — 8,6% lawan 11,5%, unggul tipis, bukan mutlak |
+| unggul 2,4× kecepatan | **gugur** — itu detik per produk atas jumlah platform berbeda |
+
+## Ablasi: memanjangkan judul menyelundupkan merek
+
+`panjangkan_judul` menambah kata dari judul produk kembar sampai judul mencapai
+panjang lazim platform. Docstring-nya dulu mengklaim itu tidak menambah risiko
+halusinasi "karena sudah didukung bukti". Didukung katalog, bukan didukung foto.
+
+Kandidatnya termasuk nama merek, dan merek tetangga selalu milik produk lain:
+
+    sebelum : Headset Gaming Hitam Kabel Mikrofon FANTECH
+    sesudah : Headset Gaming Hitam Kabel Mikrofon
+
+Menyaring merek dari kandidat menurunkan `merek_ketat%` dari 17,2% ke 8,6%,
+dengan ongkos 3,5 poin `panjang_patuh%`. `harga_err%` dan `inti` tidak bergerak,
+sesuai dugaan — penyaringan hanya menyentuh pemilihan kata di judul.
+
+Efek ini tak terlihat sama sekali tanpa penyamaan cakupan (5,0% lawan 9,0%),
+karena 71 dari 100 produk tidak punya tetangga, jadi tidak ada yang bisa dipinjam.
+
+## Penarikan diri, dan harganya
+
+`dikenal: false` per tingkat eksklusi:
+
+| tingkat | mengaku asing | cakupan harga |
+|---|---|---|
+| diri | 48/100 | 52,6% |
+| lini | 71/100 | 28,9% |
+| kategori | 89/100 | 11,3% |
+
+Pada tingkat `lini` sistem tidak memberi angka harga untuk 71% produk. Itu
+perilaku yang disengaja — tanpa padanan katalog tidak ada dasar menyebut harga —
+tapi harus dilaporkan sebagai angka utama, bukan catatan kaki. Sistem yang benar
+28,9% dari waktu dan diam sisanya bukan sistem yang benar 71,1% dari waktu.
+
+Ambang visualnya 0,80 dan belum pernah diuji tandingannya. Ablasi 0,70 / 0,75 /
+0,80 akan memperlihatkan berapa cakupan yang bisa ditebus dengan berapa ketepatan.
+
+## Yang belum dikerjakan
+
+1. **Uji mata manusia.** Semua di atas otomatis. `merek_ketat%` memihak pipeline
+   secara struktural: bacaan penglihatan dipakai sebagai bukti untuk kedua sisi,
+   padahal pipeline menulis dari teks itu sementara baseline menulis dari fotonya.
+   Kata baseline bisa benar-benar terlihat di foto namun absen dari bacaan, dan
+   tetap dihukum. Hanya manusia yang bisa menutup celah ini.
+2. **Ablasi ambang visual.**
+3. **Distilasi.** Guru = pipeline, murid = satu model kecil. Belum dimulai.
+
+## Cara mengulang sesi 1
+
+```bash
+bash sesi1.sh                                   # 3 tingkat eksklusi + baseline
+python scripts/patch_baseline_vlm.py \
+    --baseline data_drive/eval/S1_baseline_12b.jsonl \
+    --sumber   data_drive/eval/S1_pipeline_diri.jsonl
+python scripts/eval_listing.py data_drive/eval/S1_*.jsonl \
+    --samakan-cakupan data_drive/eval/S1_pipeline_lini.jsonl
+```
