@@ -19,12 +19,14 @@ jadi efeknya bisa dipisah — bukan disimpulkan dari perasaan.
 | D tanpa saring merek | 2,6% | **17,2%** | 27,6% | 75,9% | 0,384 | 18,5 |
 | E tanpa contoh + pemanjangan | 2,6% | 0,0% | 13,8% | **20,7%** | 0,278 | 18,4 |
 | **F** penjaga presisi | **2,6%** | **0,0%** | 10,0% | 76,7% | **0,403** | 18,4 |
-| **G** F + frasa "merek tidak" (dipakai) | **2,6%** | **0,0%** | 13,3% | **80,0%** | 0,387 | 18,7 |
+| **G** F + frasa "merek tidak" | **2,6%** | **0,0%** | 13,3% | **80,0%** | 0,387 | 18,7 |
+| **I** penjaga angka + bukti foto | **2,6%** | **0,0%** | 17,2% | 79,3% | **0,399** | **17,8** |
+| **M** I + penanganan deskripsi (**final**) | **2,6%** | **0,0%** | 13,3% | **82,8%** | 0,351 | 28,6 |
 
-| **I** penjaga angka + bukti foto (**final**) | **2,6%** | **0,0%** | 17,2% | 79,3% | **0,399** | **17,8** |
-
-Kolom `spek_karang` — ukuran dan isi yang dikarang — baru tuntas di I:
-**10,0% → 0,0%**. I adalah keadaan akhir kode.
+Kolom `spek_karang` — ukuran dan isi yang dikarang di judul — tuntas di I:
+**10,0% → 0,0%**. M menambahkan penanganan deskripsi dan jadi keadaan akhir kode;
+ia membayar 11 detik per produk untuk menghabiskan klaim berisiko dan merek
+karangan yang selama ini bersembunyi di deskripsi.
 
 Dua ukuran halusinasi merek dipakai bersamaan, dan bedanya penting:
 
@@ -156,6 +158,39 @@ penulisan. Tiap model dimuat sekali.
 
 **Pengaruh.** Dari sekitar **300 detik/produk jadi 18 detik**. Ini juga yang
 membuat lima konfigurasi di atas bisa diuji dalam satu malam.
+
+
+### 5. Penanganan pelanggaran deskripsi — tiga lapis, dipakai bersama
+
+Metrik deskripsi baru dibuat belakangan, dan begitu ada, tiga cacat langsung
+terlihat pada keluaran yang judulnya sudah bersih: klaim berisiko ("khasiat",
+"ampuh") 6,9%, kata tak berdasar 20,7%, dan merek yang **sudah disaring dari judul
+tetap hidup di deskripsi** ("Tas Longchamp", "teknologi altraze"). Risikonya tidak
+hilang, cuma pindah tempat.
+
+Tiga cara diuji terpisah pada 10 produk yang sama, lalu digabung:
+
+| cara | klaim | kata tak berdasar | angka karangan | panjang | ulang judul | detik |
+|---|---|---|---|---|---|---|
+| tanpa penanganan | 6,9% | 20,7% | 3,4% | 112 | 0,0% | 17,8 |
+| (a) buang kalimat | 0,0% | 0,0% | 0,0% | **85** | 7,4% | 26,4 |
+| (b) tulis ulang | 0,0% | 6,9% | 3,4% | 127 | 0,0% | 24,9 |
+| (c) larangan prompt | 3,3% | 20,0% | 0,0% | 122 | 0,0% | 21,5 |
+| **kombinasi (bawaan)** | **0,0%** | **0,0%** | **0,0%** | **123** | **0,0%** | 28,6 |
+
+Masing-masing punya kelemahan sendiri. (a) menjamin bersih tapi memangkas isi —
+satu kata "khasiat" membuang seluruh kalimatnya, dan 7,4% deskripsi berakhir cuma
+mengulang judul. (b) mempertahankan isi tapi menyisakan 6,9% kata tak berdasar.
+(c) paling murah, menghabiskan angka karangan, tapi **tidak menggeser kata tak
+berdasar sama sekali** — melarang daftar kata tidak mencegah model mengarang merek.
+
+Kombinasi memakai ketiganya bertingkat: larangan di prompt lebih dulu, lalu tulis
+ulang untuk yang lolos, lalu buang kalimat kalau tulisan ulangnya masih melanggar.
+Hasilnya jaminan mutlak seperti (a) dengan panjang isi seperti (b).
+
+Dari 29 deskripsi: **24% perlu ditulis ulang, dan 10% masih melanggar setelah itu**
+sehingga kalimatnya dibuang. Lapis ketiga bukan hiasan — model kecil mengulang
+pelanggaran yang sama sepertiga waktunya.
 
 ---
 
