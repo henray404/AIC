@@ -610,6 +610,10 @@ def main():
     # Irisan dipakai supaya satu konfigurasi bisa dikerjakan beberapa kali tanpa
     # mengubah sampelnya: seed sama -> urutan sama -> potongan a:b selalu produk
     # yang sama. Perlu karena satu run penuh kena batas waktu proses latar.
+    ap.add_argument("--ids-dari", default=None, metavar="PARQUET",
+                    help="jalankan pada product_id di berkas ini, bukan sampel "
+                         "acak. Dipakai untuk membangkitkan label guru yang bisa "
+                         "disambung ke sisi input lewat product_id.")
     ap.add_argument("--panjangkan-merek", action="store_true",
                     help="izinkan nama merek tetangga ikut ditambahkan saat "
                          "memanjangkan judul (perilaku lama, terbukti menyuntikkan "
@@ -671,7 +675,20 @@ def main():
         print("indeks contoh pola per platform: "
               + ", ".join(f"{k}={len(v[1]):,}" for k, v in idx_platform.items()))
 
-    sampel = df.sample(args.n, random_state=args.seed)
+    if args.ids_dari:
+        # Untuk membangkitkan label guru: produknya ditentukan berkas lain
+        # (mis. text_pairs.parquet), bukan sampel acak, supaya keluarannya bisa
+        # disambung ke sisi input lewat product_id. Urutannya dikunci ke urutan
+        # katalog, bukan urutan berkas, supaya --iris tetap berarti sama di tiap
+        # jalan walau berkasnya ditulis ulang.
+        ids = pd.read_parquet(args.ids_dari)["product_id"].astype(str)
+        sampel = df[df["product_id"].astype(str).isin(set(ids))]
+        print(f"daftar id dari {Path(args.ids_dari).name}: "
+              f"{len(ids):,} diminta, {len(sampel):,} ada di katalog")
+        if sampel.empty:
+            raise SystemExit("tidak ada product_id yang cocok — periksa berkasnya")
+    else:
+        sampel = df.sample(args.n, random_state=args.seed)
     mode = "w"
     if args.iris:
         a, b = (int(x) for x in args.iris.split(":"))
