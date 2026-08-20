@@ -30,7 +30,21 @@ PROJECT = Path(__file__).resolve().parent.parent
 SUMBER = PROJECT / "data_drive" / "merged" / "merged_local.parquet"
 OLLAMA = "http://localhost:11434/api/generate"
 
-PLATFORM = ("blibli", "tokopedia", "shopee")
+PROFIL = PROJECT / "data_drive" / "merged" / "platform_profiles.json"
+# Daftar platform diambil dari profil, sama seperti retrieve_pipeline.py:638.
+# Sebelumnya tiga platform dikunci di sini, jadi di mesin yang profilnya tidak
+# punya shopee baseline tetap menulis shopee sementara pipeline tidak -- dan
+# eval membandingkan 300 listing lawan 200 tanpa memberi tahu satuannya beda.
+def _platform() -> tuple[str, ...]:
+    if PROFIL.exists():
+        ada = json.loads(PROFIL.read_text(encoding="utf-8"))
+        pakai = tuple(p for p in ("blibli", "tokopedia", "shopee") if p in ada)
+        if pakai:
+            return pakai
+    return ("blibli", "tokopedia", "shopee")
+
+
+PLATFORM = _platform()
 
 PROMPT = """Kamu penulis listing marketplace Indonesia. Lihat foto produk ini.
 
