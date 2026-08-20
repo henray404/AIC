@@ -68,7 +68,7 @@ def _muat_lex() -> dict:
 LEX = _muat_lex()
 
 
-def nilai(path: Path, profil: dict) -> dict:
+def nilai(path: Path, profil: dict, hanya: set[str] | None = None) -> dict:
     baris = [json.loads(l) for l in path.open(encoding="utf-8")]
     m: dict[str, list] = {k: [] for k in
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
@@ -92,6 +92,8 @@ def nilai(path: Path, profil: dict) -> dict:
         for plat, h in hasil.items():
             if not isinstance(h, dict):
                 continue
+            if hanya and plat not in hanya:
+                continue
             valid = "_mentah" not in h and bool(h.get("judul"))
             m["json_valid"].append(valid)
             if not valid:
@@ -104,11 +106,19 @@ def nilai(path: Path, profil: dict) -> dict:
             m["spek_karang"].append(bool(karang_angka))
             asing = kj - terlihat - katalog
             m["merek_karang"].append(bool(asing))
-            # Ukuran ketat: hanya bukti penglihatan yang memaafkan, katalog tidak.
+            # Ukuran ketat: bukti penglihatan saja yang memaafkan, katalog tidak.
             # Pipeline punya katalog, baseline tidak — ukuran yang ikut memaafkan
             # lewat katalog memberi pipeline keringanan yang lawannya tidak punya
             # akses ke sana. Angka ini satu-satunya yang dibandingkan setara.
-            m["merek_ketat"].append(bool(kj - terlihat))
+            #
+            # Penyempitan leksikonnya sama dengan merek_sempit, dan itu wajib.
+            # Tanpa penyempitan, `bool(kj - terlihat)` menandai judul karena satu
+            # kata lazim tidak muncul di bacaan foto — "minum", "liter" dihukum
+            # sama kerasnya dengan nama merek asing. Yang terukur jadi irisan
+            # kosakata, bukan karangan.
+            if LEX:
+                m["merek_ketat"].append(
+                    any(w in LEX["merek"] or w not in LEX["umum"] for w in kj - terlihat))
             # Ukuran sempit: dari kata tak berdasar, hanya hitung yang benar-benar
             # bermasalah — nama merek nyata milik produk lain, atau istilah langka
             # yang tidak ada di kosakata katalog. Ukuran lebar di atas menghukum
@@ -202,13 +212,22 @@ def nilai(path: Path, profil: dict) -> dict:
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("berkas", nargs="+")
+    ap.add_argument("--hanya-platform", default=None,
+                    help="nilai hanya platform ini, dipisah koma. Perlu kalau dua "
+                         "berkas menulis himpunan platform yang berbeda — tanpa ini "
+                         "keduanya dibandingkan atas dasar yang tidak sama.")
     args = ap.parse_args()
 
+    hanya = ({p.strip() for p in args.hanya_platform.split(",")}
+             if args.hanya_platform else None)
     profil = muat_profil()
-    hasil = [nilai(Path(b), profil) for b in args.berkas]
+    hasil = [nilai(Path(b), profil, hanya) for b in args.berkas]
+    if hanya:
+        print(f"platform dinilai: {sorted(hanya)}")
+        print()
 
     kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "spek_karang%",
-             "merek_sempit%", "panjang_patuh%", "inti", "detik"]
+             "merek_sempit%", "merek_ketat%", "panjang_patuh%", "inti", "detik"]
     kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
                   "desk_sampah%", "desk_ulang%", "desk_potong%"]
     lebar = {k: max([len(k)] + [len(str(h[k])) for h in hasil]) for k in kunci}
