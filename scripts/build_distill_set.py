@@ -46,14 +46,31 @@ def layak(h: dict) -> bool:
     return desk[-1] in ".!?"
 
 
-def contoh(fakta_str: str, platform: str, h: dict) -> dict:
+def contoh(fakta_str: str, platform: str, h: dict, r: dict) -> dict:
+    """Contoh latih, dengan metadata produknya disematkan di baris yang sama.
+
+    Metadata ikut ditulis, bukan dicari lagi saat inferensi. Teks fakta TIDAK
+    unik — 383 kelompok mencakup 870 dari 10.003 baris, misalnya sembilan kaos
+    Cardinal berbeda yang semuanya menjadi "jenis: T-Shirt | merek: Cardinal |
+    kategori: fashion_perawatan | harga: 217000". Memetakan teks fakta kembali
+    ke produknya lewat dict membuat entri saling menimpa, dan 8,7% baris
+    keluaran mencatat judul_asli milik produk lain — termasuk saat `inti`
+    dihitung, jadi angkanya tidak bisa dipercaya.
+
+    `Percakapan` di train_student.py hanya membaca kunci `messages`, jadi kunci
+    tambahan ini tidak menyentuh latihannya.
+    """
     masuk = f"platform: {platform} | {fakta_str}"
     keluar = json.dumps({"judul": str(h["judul"]).strip(),
                          "deskripsi": str(h["deskripsi"]).strip()},
                         ensure_ascii=False)
     return {"messages": [{"role": "system", "content": SISTEM},
                          {"role": "user", "content": masuk},
-                         {"role": "assistant", "content": keluar}]}
+                         {"role": "assistant", "content": keluar}],
+            "product_id": str(r.get("product_id")), "platform": platform,
+            "source": r.get("source", ""), "judul_asli": r.get("judul_asli", ""),
+            "harga_asli": r.get("harga_asli", 0),
+            "kategori_asli": r.get("kategori_asli", "")}
 
 
 def main():
@@ -84,7 +101,7 @@ def main():
             continue
         for plat, h in (r.get("hasil") or {}).items():
             if layak(h):
-                per_produk.setdefault(pid, []).append(contoh(peta[pid], plat, h))
+                per_produk.setdefault(pid, []).append(contoh(peta[pid], plat, h, r))
             else:
                 n_buang += 1
     print(f"{len(per_produk):,} produk tersambung, "
@@ -169,9 +186,26 @@ def _selfcheck():
     assert not layak({"judul": "Botol Minum Tritan", "deskripsi": "pendek."})
     assert not layak({"judul": "Botol Minum Tritan", "deskripsi": "A" * 50})  # terpotong
     c = contoh("jenis: Botol", "tokopedia",
-               {"judul": "Botol Minum", "deskripsi": "Praktis."})
+               {"judul": "Botol Minum", "deskripsi": "Praktis."},
+               {"product_id": "p1", "judul_asli": "Botol Minum Tritan 2 Liter",
+                "harga_asli": 33000, "source": "tokopedia",
+                "kategori_asli": "kriya_rumah"})
     assert c["messages"][1]["content"].startswith("platform: tokopedia | jenis:")
     assert json.loads(c["messages"][2]["content"])["judul"] == "Botol Minum"
+
+    # Metadata harus menempel di barisnya. Dua produk berbeda boleh punya teks
+    # fakta yang persis sama -- itu yang membuat pencarian balik lewat dict
+    # menimpa entri dan menyilangkan judul_asli antar produk.
+    assert c["product_id"] == "p1"
+    assert c["judul_asli"] == "Botol Minum Tritan 2 Liter"
+    kembar = contoh("jenis: Botol", "tokopedia",
+                    {"judul": "Botol Minum", "deskripsi": "Praktis."},
+                    {"product_id": "p2", "judul_asli": "Botol Minum Jumbo 1 Liter",
+                     "harga_asli": 21000, "source": "blibli",
+                     "kategori_asli": "kriya_rumah"})
+    assert c["messages"][1] == kembar["messages"][1]      # input identik
+    assert c["product_id"] != kembar["product_id"]        # produknya tidak
+    assert c["judul_asli"] != kembar["judul_asli"]
     print("selfcheck ok")
 
 
