@@ -53,6 +53,18 @@ SAMPAH = re.compile(
 STOP = {"dan", "untuk", "yang", "dengan", "atau", "the", "for", "with", "pcs", "set"}
 
 
+def baca_ids(path: Path) -> set[str]:
+    """Kumpulan product_id dari .parquet (kolom) atau .jsonl (kunci tiap baris).
+
+    Menerima keduanya supaya berkas keluaran eksperimen bisa langsung dipakai
+    sebagai daftar uji, tanpa langkah ubah bentuk lebih dulu.
+    """
+    if path.suffix == ".parquet":
+        return set(pd.read_parquet(path)["product_id"].astype(str))
+    return {str(json.loads(l)["product_id"])
+            for l in path.open(encoding="utf-8") if l.strip()}
+
+
 def token(teks) -> list[str]:
     return [w for w in re.findall(r"[a-z0-9]+", str(teks).lower())
             if len(w) >= 3 and w not in STOP]
@@ -621,10 +633,11 @@ def main():
     # Irisan dipakai supaya satu konfigurasi bisa dikerjakan beberapa kali tanpa
     # mengubah sampelnya: seed sama -> urutan sama -> potongan a:b selalu produk
     # yang sama. Perlu karena satu run penuh kena batas waktu proses latar.
-    ap.add_argument("--ids-dari", default=None, metavar="PARQUET",
-                    help="jalankan pada product_id di berkas ini, bukan sampel "
-                         "acak. Dipakai untuk membangkitkan label guru yang bisa "
-                         "disambung ke sisi input lewat product_id.")
+    ap.add_argument("--ids-dari", default=None, metavar="BERKAS",
+                    help="jalankan pada product_id di berkas ini (.parquet atau "
+                         ".jsonl), bukan sampel acak. Dipakai untuk membangkitkan "
+                         "label guru, dan untuk menguji semua sistem di himpunan "
+                         "uji yang sama.")
     ap.add_argument("--panjangkan-merek", action="store_true",
                     help="izinkan nama merek tetangga ikut ditambahkan saat "
                          "memanjangkan judul (perilaku lama, terbukti menyuntikkan "
@@ -692,8 +705,8 @@ def main():
         # disambung ke sisi input lewat product_id. Urutannya dikunci ke urutan
         # katalog, bukan urutan berkas, supaya --iris tetap berarti sama di tiap
         # jalan walau berkasnya ditulis ulang.
-        ids = pd.read_parquet(args.ids_dari)["product_id"].astype(str)
-        sampel = df[df["product_id"].astype(str).isin(set(ids))]
+        ids = baca_ids(Path(args.ids_dari))
+        sampel = df[df["product_id"].astype(str).isin(ids)]
         print(f"daftar id dari {Path(args.ids_dari).name}: "
               f"{len(ids):,} diminta, {len(sampel):,} ada di katalog")
         if sampel.empty:

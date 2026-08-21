@@ -53,6 +53,18 @@ SAMPAH = re.compile(
 STOP = {"dan", "untuk", "yang", "dengan", "atau", "the", "for", "with", "pcs", "set"}
 
 
+def baca_ids(path: Path) -> set[str]:
+    """Kumpulan product_id dari .parquet (kolom) atau .jsonl (kunci tiap baris).
+
+    Menerima keduanya supaya berkas keluaran eksperimen bisa langsung dipakai
+    sebagai daftar uji, tanpa langkah ubah bentuk lebih dulu.
+    """
+    if path.suffix == ".parquet":
+        return set(pd.read_parquet(path)["product_id"].astype(str))
+    return {str(json.loads(l)["product_id"])
+            for l in path.open(encoding="utf-8") if l.strip()}
+
+
 def token(teks) -> list[str]:
     return [w for w in re.findall(r"[a-z0-9]+", str(teks).lower())
             if len(w) >= 3 and w not in STOP]
@@ -409,13 +421,25 @@ def tulis_ulang_deskripsi(desk: str, salah: list[str], fakta: str) -> str:
 
 
 def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
-                     plat: str | None, lex: dict) -> tuple[str, list[str]]:
+                     plat: str | None, lex: dict,
+                     izinkan_merek: bool = False) -> tuple[str, list[str]]:
     """Tambahkan kata kunci pendukung sampai judul mencapai panjang lazim platform.
 
     Tokopedia median 15 kata, tapi model 4B/7B tetap menulis 6 kata betapapun
     dimintanya — tiga putaran prompt tidak menggesernya. Jadi dikerjakan di luar
-    model: kata diambil dari judul produk kembar di katalog, yang menurut definisi
-    sudah didukung bukti, jadi tidak menambah risiko halusinasi.
+    model: kata diambil dari judul produk kembar di katalog.
+
+    Versi awal fungsi ini mengklaim penambahan itu "tidak menambah risiko
+    halusinasi karena sudah didukung bukti". Klaim itu salah, dan sesi 1
+    membantahnya: didukung KATALOG bukan berarti didukung FOTO. Pada produk
+    yang retrievalnya aktif, merek_ketat% pipeline naik ke 17,2% dan melewati
+    baseline 11,5% — kata yang dipinjam dari tetangga menyatakan hal yang tidak
+    terlihat di foto produknya sendiri.
+
+    Nama merek yang paling berbahaya, karena merek tetangga selalu milik produk
+    lain, tidak pernah milik produk ini. Sekarang disaring. `izinkan_merek`
+    mengembalikan perilaku lama, dan ada hanya supaya keduanya bisa dibandingkan
+    dalam satu tabel ablasi.
     """
     if not plat or tetangga is None or not len(tetangga):
         return judul, []
@@ -432,8 +456,10 @@ def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
     for t in tetangga["title_bersih"]:
         for w in set(token(t)):
             hitung[w] += 1
+    merek = lex.get("merek", set())
     kandidat = [w for w, c in sorted(hitung.items(), key=lambda x: -x[1])
-                if c >= 2 and w not in ada and w.isalpha() and len(w) > 2]
+                if c >= 2 and w not in ada and w.isalpha() and len(w) > 2
+                and (izinkan_merek or w not in merek)]
 
     tambah = []
     kata = judul.split()
@@ -561,7 +587,18 @@ def main():
                     help="ambang skor teks; di bawah ini konteks katalog tidak dipakai")
     # Ambang dari sebaran nyata: produk yang punya padanan di katalog semuanya
     # >=0,91, yang tidak punya jatuh di 0,67-0,77. Jurangnya lebar di sekitar 0,80.
-    ap.add_argument("--ambang-visual", type=float, default=0.80,
+    # 0,80 dipilih di awal tanpa tandingan, dan ablasi sesi 1 menunjukkan 0,75
+    # mengalahkannya di hampir semua kolom sekaligus (100 produk, eksklusi lini):
+    #
+    #   ambang  cakupan  harga_err  merek_ketat  inti   panjang_patuh
+    #   0,70    63,9%    37,8       7,5          0,405  50,0
+    #   0,75    44,3%    30,5       3,5          0,377  41,5
+    #   0,80    28,9%    33,1       2,5          0,343  30,5
+    #
+    # Naik ke 0,75 menambah cakupan 53% relatif sambil MENURUNKAN galat harga.
+    # Ongkosnya merek_ketat 2,5 -> 3,5. Turun lagi ke 0,70 baru mahal: galat
+    # harga naik ke 37,8 dan karangan merek melipat dua.
+    ap.add_argument("--ambang-visual", type=float, default=0.75,
                     help="di bawah ini barang dianggap ASING: tulis hanya dari foto, "
                          "tanpa merek dan harga dari katalog")
     ap.add_argument("--platform", default=None,
@@ -596,6 +633,15 @@ def main():
     # Irisan dipakai supaya satu konfigurasi bisa dikerjakan beberapa kali tanpa
     # mengubah sampelnya: seed sama -> urutan sama -> potongan a:b selalu produk
     # yang sama. Perlu karena satu run penuh kena batas waktu proses latar.
+    ap.add_argument("--ids-dari", default=None, metavar="BERKAS",
+                    help="jalankan pada product_id di berkas ini (.parquet atau "
+                         ".jsonl), bukan sampel acak. Dipakai untuk membangkitkan "
+                         "label guru, dan untuk menguji semua sistem di himpunan "
+                         "uji yang sama.")
+    ap.add_argument("--panjangkan-merek", action="store_true",
+                    help="izinkan nama merek tetangga ikut ditambahkan saat "
+                         "memanjangkan judul (perilaku lama, terbukti menyuntikkan "
+                         "merek milik produk lain — untuk ablasi saja)")
     ap.add_argument("--iris", default=None, help="proses sebagian sampel saja, mis. 0:5")
     args = ap.parse_args()
 
@@ -653,7 +699,20 @@ def main():
         print("indeks contoh pola per platform: "
               + ", ".join(f"{k}={len(v[1]):,}" for k, v in idx_platform.items()))
 
-    sampel = df.sample(args.n, random_state=args.seed)
+    if args.ids_dari:
+        # Untuk membangkitkan label guru: produknya ditentukan berkas lain
+        # (mis. text_pairs.parquet), bukan sampel acak, supaya keluarannya bisa
+        # disambung ke sisi input lewat product_id. Urutannya dikunci ke urutan
+        # katalog, bukan urutan berkas, supaya --iris tetap berarti sama di tiap
+        # jalan walau berkasnya ditulis ulang.
+        ids = baca_ids(Path(args.ids_dari))
+        sampel = df[df["product_id"].astype(str).isin(ids)]
+        print(f"daftar id dari {Path(args.ids_dari).name}: "
+              f"{len(ids):,} diminta, {len(sampel):,} ada di katalog")
+        if sampel.empty:
+            raise SystemExit("tidak ada product_id yang cocok — periksa berkasnya")
+    else:
+        sampel = df.sample(args.n, random_state=args.seed)
     mode = "w"
     if args.iris:
         a, b = (int(x) for x in args.iris.split(":"))
@@ -790,7 +849,7 @@ def main():
                     if args.panjangkan and h.get("judul"):
                         panjang, tambah = panjangkan_judul(
                             str(h["judul"]), tetangga if pakai else None,
-                            profil, plat, lex)
+                            profil, plat, lex, args.panjangkan_merek)
                         if tambah:
                             h.setdefault("judul_mentah", h["judul"])
                             h["ditambah"] = tambah
