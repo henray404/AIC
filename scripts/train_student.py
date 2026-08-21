@@ -119,7 +119,6 @@ def latih(args):
 
 
 def infer(args):
-    import pandas as pd
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -128,10 +127,13 @@ def infer(args):
         args.dasar, torch_dtype=torch.bfloat16, device_map="cuda")
     model = PeftModel.from_pretrained(model, ADAPTER).eval()
 
+    # Metadata dibaca dari barisnya sendiri. Versi sebelumnya mencarinya balik
+    # dengan {r.input: r for r in ...}, padahal teks fakta tidak unik: 870 dari
+    # 10.003 baris berbagi teks dengan produk lain, jadi entri saling menimpa
+    # dan 8,7% keluaran mencatat judul_asli milik produk yang salah — persis
+    # kolom yang dipakai menghitung `inti`.
     uji = [json.loads(l) for l in
            (DATA / "distill_uji.jsonl").open(encoding="utf-8") if l.strip()]
-    inp = pd.read_parquet(DATA / "text_pairs.parquet")
-    asal = {r.input: r for r in inp.itertuples()}
 
     keluaran = Path(args.keluaran)
     keluaran.parent.mkdir(parents=True, exist_ok=True)
@@ -154,15 +156,13 @@ def infer(args):
 
             # Bentuk keluaran disamakan dengan retrieve_pipeline.py supaya
             # eval_listing.py menilainya dengan metrik yang sama persis.
-            masuk = pesan[-1]["content"]
-            plat = masuk.split("|")[0].replace("platform:", "").strip()
-            r = asal.get(masuk.split("|", 1)[1].strip())
+            plat = b.get("platform") or "umum"
             f.write(json.dumps({
-                "product_id": getattr(r, "product_id", f"uji{i}"),
-                "source": getattr(r, "source", ""),
-                "judul_asli": getattr(r, "title", ""),
-                "harga_asli": int(getattr(r, "price", 0) or 0),
-                "kategori_asli": getattr(r, "kategori_umkm", ""),
+                "product_id": b.get("product_id", f"uji{i}"),
+                "source": b.get("source", ""),
+                "judul_asli": b.get("judul_asli", ""),
+                "harga_asli": int(b.get("harga_asli") or 0),
+                "kategori_asli": b.get("kategori_asli", ""),
                 # Murid tidak melihat foto dan tidak punya katalog; kedua kolom
                 # ini memang kosong, dan itu membuat merek_ketat% menghukum tiap
                 # katanya. Nilai murid lewat inti dan desk_*, bukan merek_ketat%.
