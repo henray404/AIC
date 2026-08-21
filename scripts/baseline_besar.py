@@ -57,6 +57,20 @@ Tulis listing untuk platform {platform}. Aturan:
 Jawab JSON: {{"judul": "...", "deskripsi": "...", "kategori": "...", "perkiraan_harga": 0}}"""
 
 
+def baca_ids(path: Path) -> set[str]:
+    """Kumpulan product_id dari .parquet (kolom) atau .jsonl (kunci tiap baris).
+
+    Menerima keduanya supaya berkas keluaran eksperimen bisa langsung dipakai
+    sebagai daftar uji. Salinan sengaja dari retrieve_pipeline.py: dua pemanggil
+    belum cukup untuk membenarkan modul bersama, dan skrip di sini dirancang
+    berdiri sendiri supaya bisa disalin ke mesin sewaan satuan.
+    """
+    if path.suffix == ".parquet":
+        return set(pd.read_parquet(path)["product_id"].astype(str))
+    return {str(json.loads(l)["product_id"])
+            for l in path.open(encoding="utf-8") if l.strip()}
+
+
 def muat_gambar(path: Path, sisi_maks: int = 640) -> str:
     with Image.open(path) as im:
         im = im.convert("RGB")
@@ -84,6 +98,10 @@ def main():
     ap.add_argument("--model", default="gemma3:12b")
     ap.add_argument("--n", type=int, default=100)
     ap.add_argument("--seed", type=int, default=7)
+    ap.add_argument("--ids-dari", default=None, metavar="BERKAS",
+                    help="jalankan pada product_id di berkas ini (.parquet atau "
+                         ".jsonl), bukan sampel acak. Perlu untuk menguji baseline "
+                         "di himpunan uji yang sama dengan sistem lain.")
     ap.add_argument("--iris", default=None, help="proses sebagian sampel, mis. 0:25")
     ap.add_argument("--timeout", type=int, default=300)
     ap.add_argument("--keluaran", default=None)
@@ -95,8 +113,18 @@ def main():
 
     df = pd.read_parquet(SUMBER)
     df = df[df["n_gambar_lokal"] > 0].reset_index(drop=True)
-    # seed dan n sama persis dengan retrieve_pipeline.py -> produk yang diuji identik
-    sampel = df.sample(args.n, random_state=args.seed)
+    # Dua cara memilih produk uji, dan keduanya menghasilkan himpunan yang sama
+    # dengan retrieve_pipeline.py: --ids-dari menyalin daftarnya dari berkas
+    # lain, sedangkan tanpa itu seed dan n-nya sama persis.
+    if args.ids_dari:
+        ids = baca_ids(Path(args.ids_dari))
+        sampel = df[df["product_id"].astype(str).isin(ids)]
+        print(f"daftar id dari {Path(args.ids_dari).name}: "
+              f"{len(ids):,} diminta, {len(sampel):,} ada di katalog")
+        if sampel.empty:
+            raise SystemExit("tidak ada product_id yang cocok — periksa berkasnya")
+    else:
+        sampel = df.sample(args.n, random_state=args.seed)
     mode = "w"
     if args.iris:
         a, b = (int(x) for x in args.iris.split(":"))
@@ -122,8 +150,14 @@ def main():
                 "product_id": r["product_id"], "source": r["source"],
                 "judul_asli": r["title"], "harga_asli": int(r["price"]),
                 "kategori_asli": r["kategori_umkm"],
-                # kolom ini kosong supaya eval memperlakukan baseline dengan adil:
-                # ia memang tidak punya tahap penglihatan terpisah maupun katalog
+                # vlm kosong karena baseline memang tidak punya tahap penglihatan
+                # terpisah. JANGAN dinilai apa adanya: eval_listing.py menghitung
+                # karangan sebagai kata(judul) - kata(vlm) - kata(tetangga), jadi
+                # bukti kosong membuat SELURUH kata judul terhitung karangan dan
+                # baseline mencatat halusinasi 100% tanpa satu pun pengukuran nyata.
+                # Jalankan scripts/patch_baseline_vlm.py dulu -- ia menyalin bacaan
+                # penglihatan dari berkas pipeline lewat product_id.
+                # tetangga tetap kosong: baseline memang tidak diberi katalog.
                 "vlm": "", "tetangga": [], "skor_teratas": 0.0,
                 "pakai_konteks": False, "dikenal": None, "platform": list(PLATFORM),
                 "hasil": keluar, "detik": round(time.time() - mulai, 1), "galat": galat,
