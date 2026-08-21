@@ -362,3 +362,122 @@ python scripts/patch_baseline_vlm.py \
 python scripts/eval_listing.py data_drive/eval/S1_*.jsonl \
     --samakan-cakupan data_drive/eval/S1_pipeline_lini.jsonl
 ```
+
+---
+
+# Sesi 1 lanjutan — ambang, N=500, dan dua murid sulingan
+
+## Ambang visual: 0,80 kalah oleh 0,75
+
+Ambang 0,80 dipilih di awal tanpa tandingan. Diuji, ia kalah:
+
+| ambang | cakupan harga | harga_err% | merek_ketat% | inti | panjang_patuh% |
+|---|---|---|---|---|---|
+| 0,70 | 63,9% | 37,8 | 7,5 | **0,405** | **50,0** |
+| **0,75** | **44,3%** | **30,5** | 3,5 | 0,377 | 41,5 |
+| 0,80 | 28,9% | 33,1 | **2,5** | 0,343 | 30,5 |
+
+0,75 menambah cakupan 53% relatif sambil **menurunkan** galat harga. Ongkosnya
+`merek_ketat` 2,5 → 3,5. Turun lagi ke 0,70 baru mahal: galat harga naik ke 37,8
+dan karangan merek melipat dua.
+
+Bawaannya diubah ke 0,75. Kelemahan terbesar laporan sesi 1 — "sistem diam di
+71% kasus" — separuhnya hilang hanya dengan menggeser satu angka.
+
+## N=500: keunggulan tumbuh, bukan menyusut
+
+Cakupan disamakan ke pipeline (126 produk, 252 listing tiap sisi):
+
+| | N=100 pipeline : baseline | N=500 pipeline : baseline |
+|---|---|---|
+| harga_err% | 33,1 : 53,3 | **29,4 : 75,3** |
+| spek_karang% | 4,5 : 24,5 | **0,0 : 18,3** |
+| merek_ketat% | 5,0 : 9,5 | 12,3 : 16,3 |
+| inti | 0,343 : 0,229 | **0,423 : 0,213** |
+| panjang_patuh% | 30,5 : 51,5 | **72,2 : 53,6** |
+| desk_asing% | 0,0 : 24,7 | 0,0 : 33,7 |
+| detik_listing | 1,48 : 2,15 | 1,38 : 1,90 |
+
+Pipeline bertahan; baseline **memburuk tajam** (53,3 → 75,3). Sampel lebih besar
+berarti produk lebih beragam, dan model besar tanpa katalog makin sering meleset.
+`panjang_patuh` bahkan berbalik arah.
+
+N=500 menggantikan N=100 sebagai angka utama: galat harga di sana diukur pada
+125 produk, bukan 28.
+
+## Empat tingkat
+
+| tingkat | model | masuk | inti | merek_ketat% | desk_asing% | detik_listing |
+|---|---|---|---|---|---|---|
+| baseline | gemma3:12b | foto | 0,25 | 9,0 | 24,7 | 2,15 |
+| pipeline | 4B+7B+CLIP+indeks | foto | **0,343** | **2,5** | **0,0** | **1,48** |
+| murid VLM | 3B | foto | 0,315 | 11,4 | 8,7 | 2,77 |
+| murid teks | 0,5B | ketikan | 0,208 | 19,2 *(tak berarti)* | 16,1 | 1,58 |
+
+**Penjaga itu kode, bukan gaya.** Murid VLM mendekati `inti` pipeline (0,315
+lawan 0,343) tapi `merek_ketat`-nya 11,4% — lebih buruk dari baseline 9,0%, dan
+`desk_asing` kembali dari 0,0% ke 8,7%. `saring_merek` dan `pelanggaran_deskripsi`
+berjalan **setelah** model menulis; distilasi memindahkan cara menulis, tidak
+memindahkan pemeriksaan.
+
+Itu bukti positif, bukan kegagalan: jaminan nol milik pipeline berasal dari
+verifikasi eksternal, bukan dari bobot model. Menanggalkan perkakasnya
+mengembalikan halusinasi, persis seperti yang diramalkan kalau penyebabnya
+memang penjaga. Dan penjaga itu bisa dipasang ke murid — `saring_merek` cuma
+butuh leksikon, bukan katalog.
+
+## Kecepatan murid: klaimnya gugur, dan sebabnya bukan modelnya
+
+`detik_listing` murid VLM 2,77 — paling lambat dari keempatnya. Tapi yang
+dibandingkan bukan model:
+
+    pipeline & baseline : Ollama / llama.cpp, Q4_K_M, KV-cache matang
+    kedua murid         : HF transformers, bf16, generate() satu-satu
+
+3B bf16 lewat `generate()` lawan 12B Q4 lewat llama.cpp mengukur tumpukan
+penyajian, bukan ukuran model. Klaim kecepatan untuk tingkat murid **tidak
+berdiri** sampai keduanya disajikan sama.
+
+Percobaan menyamakannya gagal: penggabungan LoRA terverifikasi benar lewat HF
+(keluaran koheren), tapi setelah `ollama create` ke GGUF Q4_K_M keluarannya
+rusak — "?????" berulang di semua variasi prompt. Laju mentahnya terukur 0,526
+detik/listing, tapi angka itu **tidak dipakai**: tidak terverifikasi berasal dari
+model yang menghasilkan listing benar. Langkah pemisah yang belum dijalankan:
+konversi ke GGUF F16 dulu tanpa kuantisasi — kalau F16 juga rusak, konversinya;
+kalau F16 benar, kuantisasinya.
+
+## Apa yang disumbang foto: mengenali benda, bukan menulis
+
+Membelah berkas uji menurut apakah muridnya menamai barangnya dengan benar:
+
+| | jenis kena | inti | jenis meleset | inti |
+|---|---|---|---|---|
+| murid teks | 60,3% | 0,296 | 39,7% | 0,074 |
+| murid VLM | 74,5% | 0,355 | 25,5% | 0,198 |
+
+Saat keduanya menamai barangnya dengan benar, selisihnya tinggal 0,059 — bukan
+0,107. Lebih dari separuh jaraknya berasal dari murid teks lebih sering salah
+menebak barang apa.
+
+Jadi sumbangan foto adalah **pengenalan**, bukan penulisan. Contohnya konkret:
+kaos "180 Degrees ..." diekstrak sebagai `jenis: BROWN` karena "brown" kebetulan
+ada di kosakata umum dan muncul lebih dulu; murid teks menulis "Lipstik Matte
+Brown Lipstick", murid VLM melihat fotonya dan menulis "T-Shirt Pria Polos Putih".
+
+Implikasinya: memperbaiki ekstraktor `jenis` menutup sebagian besar jarak tanpa
+perlu foto. Ekstraktor itu heuristik posisi yang sudah ditandai `ponytail:` di
+`build_text_pairs.py`.
+
+Keterbatasan ukuran ini: proksi "jenis kena" adalah kata pertama judul murid
+muncul di judul asli, dan itu berbagi dasar dengan `inti`, jadi nilai mutlak
+kelompok "kena" agak dipompa. Perbandingan antar kedua murid tetap sah karena
+keduanya diukur dengan proksi yang sama.
+
+## Sisa pekerjaan
+
+1. **Uji mata manusia.** Belum dikerjakan sama sekali, dan `merek_ketat%` masih
+   memihak pipeline secara struktural.
+2. **Pasang penjaga di murid VLM.** `saring_merek` butuh leksikon saja.
+   Kemungkinan menurunkan `merek_ketat` 11,4% mendekati nol tanpa melatih ulang.
+3. **Perbaiki ekstraktor `jenis`.**
+4. **Samakan tumpukan penyajian** sebelum klaim kecepatan murid dipakai.

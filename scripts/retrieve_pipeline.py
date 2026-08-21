@@ -575,7 +575,18 @@ def main():
                     help="ambang skor teks; di bawah ini konteks katalog tidak dipakai")
     # Ambang dari sebaran nyata: produk yang punya padanan di katalog semuanya
     # >=0,91, yang tidak punya jatuh di 0,67-0,77. Jurangnya lebar di sekitar 0,80.
-    ap.add_argument("--ambang-visual", type=float, default=0.80,
+    # 0,80 dipilih di awal tanpa tandingan, dan ablasi sesi 1 menunjukkan 0,75
+    # mengalahkannya di hampir semua kolom sekaligus (100 produk, eksklusi lini):
+    #
+    #   ambang  cakupan  harga_err  merek_ketat  inti   panjang_patuh
+    #   0,70    63,9%    37,8       7,5          0,405  50,0
+    #   0,75    44,3%    30,5       3,5          0,377  41,5
+    #   0,80    28,9%    33,1       2,5          0,343  30,5
+    #
+    # Naik ke 0,75 menambah cakupan 53% relatif sambil MENURUNKAN galat harga.
+    # Ongkosnya merek_ketat 2,5 -> 3,5. Turun lagi ke 0,70 baru mahal: galat
+    # harga naik ke 37,8 dan karangan merek melipat dua.
+    ap.add_argument("--ambang-visual", type=float, default=0.75,
                     help="di bawah ini barang dianggap ASING: tulis hanya dari foto, "
                          "tanpa merek dan harga dari katalog")
     ap.add_argument("--platform", default=None,
