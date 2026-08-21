@@ -60,6 +60,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input", default=str(KELUARAN / "text_pairs.parquet"))
     ap.add_argument("--guru", required=True, help="jsonl keluaran retrieve_pipeline.py")
+    ap.add_argument("--vlm", action="store_true",
+                    help="tulis juga bentuk penglihatan (foto -> listing) untuk "
+                         "train_student_vlm.py, bukan hanya bentuk teks")
+    ap.add_argument("--merged", default=str(KELUARAN / "merged_local.parquet"),
+                    help="sumber jalur foto lokal untuk bentuk --vlm")
     ap.add_argument("--uji", type=float, default=0.05, help="porsi untuk berkas uji")
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
@@ -102,6 +107,59 @@ def main():
                     f.write(json.dumps(c, ensure_ascii=False) + "\n")
                     n += 1
         print(f"  {nama}: {len(pids):,} produk, {n:,} contoh -> {p}")
+
+    if args.vlm:
+        tulis_vlm(baris, peta, args.merged, pid_latih, sorted(pid_uji))
+
+
+def tulis_vlm(baris, peta, merged, pid_latih, pid_uji):
+    """Bentuk kedua: foto -> listing, untuk train_student_vlm.py.
+
+    Pemisahan latih/uji memakai daftar produk yang SAMA dengan bentuk teks,
+    supaya kedua murid diuji pada produk yang sama dan skornya bisa disandingkan.
+    """
+    df = pd.read_parquet(merged, columns=["product_id", "local_image_paths",
+                                          "n_gambar_lokal"])
+    foto = {str(r.product_id): r.local_image_paths[0]
+            for r in df.itertuples() if r.n_gambar_lokal > 0}
+    print(f"{len(foto):,} produk punya foto lokal")
+
+    per_produk: dict[str, list[dict]] = {}
+    tanpa_foto = 0
+    for r in baris:
+        pid = str(r.get("product_id"))
+        if pid not in peta:
+            continue
+        if pid not in foto:
+            tanpa_foto += 1
+            continue
+        for plat, h in (r.get("hasil") or {}).items():
+            if not layak(h):
+                continue
+            per_produk.setdefault(pid, []).append({
+                "product_id": pid, "platform": plat, "gambar": foto[pid],
+                "jawaban": json.dumps({"judul": str(h["judul"]).strip(),
+                                       "deskripsi": str(h["deskripsi"]).strip()},
+                                      ensure_ascii=False),
+                # bacaan guru atas foto yang sama; dipakai eval_listing.py
+                # sebagai bukti penglihatan saat menilai murid
+                "vlm": r.get("vlm", ""), "source": r.get("source", ""),
+                "judul_asli": r.get("judul_asli", ""),
+                "harga_asli": r.get("harga_asli", 0),
+                "kategori_asli": r.get("kategori_asli", ""),
+            })
+    if tanpa_foto:
+        print(f"  {tanpa_foto:,} baris dilewati: tidak ada foto lokalnya")
+
+    for nama, pids in (("latih", pid_latih), ("uji", pid_uji)):
+        p = KELUARAN / f"vlm_{nama}.jsonl"
+        n = 0
+        with p.open("w", encoding="utf-8") as f:
+            for pid in pids:
+                for c in per_produk.get(pid, []):
+                    f.write(json.dumps(c, ensure_ascii=False) + "\n")
+                    n += 1
+        print(f"  vlm {nama}: {n:,} contoh -> {p}")
 
 
 def _selfcheck():
