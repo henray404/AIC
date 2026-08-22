@@ -211,6 +211,11 @@ def jalankan_pipeline(foto: Path, platform: str, eksklusi: str,
     # terlihat di layar dan bukan cuma tersirat di hasil akhirnya.
     jejak = []
     if isinstance(h, dict) and "_mentah" not in h:
+        h["kategori_model"] = h.get("kategori")
+        h["kategori"] = rp.sahkan_kategori(h.get("kategori"), kat)
+        if h["kategori"] != h["kategori_model"]:
+            jejak.append(f"kategori ditambatkan: {h['kategori_model']!r} "
+                         f"-> {h['kategori']}")
         h["harga_model"] = h.get("perkiraan_harga")
         if not pakai:
             h["perkiraan_harga"] = 0

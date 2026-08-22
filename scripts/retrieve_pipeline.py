@@ -291,9 +291,64 @@ ATURAN = (
     "- Jangan mengarang garansi, izin BPOM, atau klaim khasiat.\n"
     "{LARANGAN_TAMBAHAN}"
     "- Kalau merek tidak terbaca di foto, jangan sebut merek apa pun.\n\n"
+    "- Kategori WAJIB salah satu dari: bumbu_masak, camilan_olahan, "
+    "fashion_perawatan, kriya_rumah, minuman_herbal, pokok_tani, lainnya.\n\n"
     'Jawab JSON: {"judul": "...", "deskripsi": "...", "kategori": "...", '
     '"perkiraan_harga": 0}'
 )
+
+# Taksonomi UMKM yang dipakai seluruh katalog. Kategori adalah satu dari empat
+# keluaran, tapi sampai sesi 3 ia tidak pernah dibatasi maupun diukur: model
+# bebas mengarang "Minuman / Teh / Teh Celup" atau "Sepatu Pria", dan hanya 1
+# dari 4 percobaan menghasilkan nilai yang benar-benar ada di taksonomi.
+KATEGORI_SAH = ("bumbu_masak", "camilan_olahan", "fashion_perawatan",
+                "kriya_rumah", "minuman_herbal", "pokok_tani", "lainnya")
+
+# Kata penanda untuk menambatkan tebakan bebas ke taksonomi. Sengaja pendek dan
+# tak ambigu -- ini jaring pengaman, bukan pengelompok. Kalau tidak ada yang
+# cocok, tetangga katalog yang menentukan, dan kalau itu pun tidak ada,
+# "lainnya" lebih jujur daripada menebak.
+PENANDA_KATEGORI = {
+    "bumbu_masak": ("bumbu", "minyak goreng", "kecap", "saus", "garam", "gula",
+                    "tepung", "santan", "masak"),
+    "camilan_olahan": ("camilan", "cemilan", "snack", "keripik", "kripik",
+                       "biskuit", "roti", "kue", "cokelat", "coklat", "permen"),
+    "fashion_perawatan": ("fashion", "pakaian", "baju", "kaos", "celana", "dress",
+                          "sepatu", "sandal", "tas", "jaket", "kosmetik", "lipstik",
+                          "skincare", "perawatan", "sabun", "sampo", "parfum"),
+    "kriya_rumah": ("rumah", "dapur", "peralatan", "wadah", "botol", "gelas",
+                    "piring", "kriya", "kerajinan", "furnitur", "elektronik"),
+    "minuman_herbal": ("minuman", "teh", "kopi", "jamu", "herbal", "sirup",
+                       "susu", "jus"),
+    "pokok_tani": ("beras", "sayur", "buah", "telur", "daging", "ikan", "tani",
+                   "pertanian", "bumbu segar"),
+}
+
+
+def sahkan_kategori(nilai, kat_tetangga: str | None) -> str:
+    """Tambatkan kategori ke taksonomi. Pola yang sama dengan harga: model
+    menebak, katalog membetulkan.
+
+    Urutan: nilai model kalau sudah sah -> tetangga katalog -> kata penanda ->
+    "lainnya". Tetangga didahulukan atas penanda karena ia bukti dari produk
+    nyata, bukan cocok-cocokan kata.
+    """
+    teks = str(nilai or "").strip().lower().replace(" ", "_").replace("-", "_")
+    if teks in KATEGORI_SAH:
+        return teks
+    if kat_tetangga in KATEGORI_SAH:
+        return kat_tetangga
+    # Batas kata, BUKAN substring. Dengan `k in mentah`, "ikan" cocok di dalam
+    # "Kecantikan" dan lipstik jadi pokok_tani. Tabrakan lain yang sama
+    # berbahayanya: "tas" di kertas/atas/kualitas, "gula" di keunggulan,
+    # "susu" di susunan. Salah kategori yang bentuknya sah lebih menyesatkan
+    # daripada karangan bebas yang jelas salah.
+    mentah = str(nilai or "").lower()
+    for kat, kata_kunci in PENANDA_KATEGORI.items():
+        for k in kata_kunci:
+            if re.search(rf"\b{re.escape(k)}\b", mentah):
+                return kat
+    return "lainnya"
 
 
 LEXICON_PATH = PROJECT / "data_drive" / "merged" / "lexicon.json"
@@ -849,6 +904,8 @@ def main():
                 except Exception as e:
                     h, galat = {}, f"{type(e).__name__}: {e}"[:150]
                 if isinstance(h, dict) and h and "_mentah" not in h:
+                    h["kategori_model"] = h.get("kategori")
+                    h["kategori"] = sahkan_kategori(h.get("kategori"), s["kat"])
                     h["harga_model"] = h.get("perkiraan_harga")
                     if not pakai:
                         # barang asing: tidak ada pembanding, jadi tidak ada dasar

@@ -52,6 +52,12 @@ SAMPAH_TOKO = re.compile(
     r"chat admin|whatsapp|\bwa\b|0[0-9]{9,12})")
 
 
+# Taksonomi UMKM yang dipakai seluruh katalog. Disalin, bukan diimpor dari
+# retrieve_pipeline: penilai sengaja tidak berbagi berkas dengan yang dinilai,
+# supaya perubahan diam-diam di sana tidak ikut menggeser ukurannya.
+KATEGORI_UMKM = {"bumbu_masak", "camilan_olahan", "fashion_perawatan",
+                 "kriya_rumah", "minuman_herbal", "pokok_tani", "lainnya"}
+
 LEKSIKON = PROJECT / "data_drive" / "merged" / "lexicon.json"
 
 
@@ -103,6 +109,7 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
                            "merek_karang", "merek_sempit", "merek_ketat",
                            "harga_cakupan", "harga_logerr", "harga_2x",
+                           "kategori_sah", "kategori_benar",
                            "panjang_patuh", "inti",
                            "desk_char", "desk_spek", "desk_asing", "desk_klaim",
                            "desk_sampah", "desk_ulang", "desk_potong", "detik")}
@@ -203,6 +210,16 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
                 if hm > 0:
                     m["harga_model_err"].append(abs(hm - asli) / asli)
 
+            # Kategori adalah satu dari empat keluaran tapi tidak pernah diukur
+            # sampai sesi 3. Tanpa batasan, model mengarang bebas: "Minuman /
+            # Teh / Teh Celup", "Sepatu Pria" -- hanya 1 dari 4 percobaan
+            # menghasilkan nilai yang benar-benar ada di taksonomi.
+            kat = str(h.get("kategori", "")).strip().lower()
+            m["kategori_sah"].append(kat in KATEGORI_UMKM)
+            asli_kat = str(r.get("kategori_asli", "")).strip().lower()
+            if asli_kat in KATEGORI_UMKM:
+                m["kategori_benar"].append(kat == asli_kat)
+
             p = profil.get(plat, {}).get("judul", {})
             if p.get("target_kata"):
                 lo, hi = p["target_kata"]
@@ -247,6 +264,8 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
         "harga_logerr": (round(st.median(m["harga_logerr"]), 3)
                          if m["harga_logerr"] else float("nan")),
         "harga_2x%": round(100 * rata("harga_2x"), 1),
+        "kategori_sah%": round(100 * rata("kategori_sah"), 1),
+        "kategori_benar%": round(100 * rata("kategori_benar"), 1),
         "n_harga": len(m["harga_err"]),
         "harga_model_err%": (round(100 * st.median(m["harga_model_err"]), 1)
                              if m["harga_model_err"] else float("nan")),
@@ -304,7 +323,7 @@ def main():
 
     kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "spek_karang%",
              "harga_logerr", "harga_2x%", "harga_cakupan%", "n_harga",
-             "merek_sempit%", "merek_ketat%",
+             "kategori_sah%", "kategori_benar%", "merek_sempit%", "merek_ketat%",
              "panjang_patuh%", "inti", "detik", "detik_listing"]
     kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
                   "desk_sampah%", "desk_ulang%", "desk_potong%"]
