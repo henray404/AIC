@@ -442,9 +442,42 @@ Percobaan menyamakannya gagal: penggabungan LoRA terverifikasi benar lewat HF
 (keluaran koheren), tapi setelah `ollama create` ke GGUF Q4_K_M keluarannya
 rusak — "?????" berulang di semua variasi prompt. Laju mentahnya terukur 0,526
 detik/listing, tapi angka itu **tidak dipakai**: tidak terverifikasi berasal dari
-model yang menghasilkan listing benar. Langkah pemisah yang belum dijalankan:
-konversi ke GGUF F16 dulu tanpa kuantisasi — kalau F16 juga rusak, konversinya;
-kalau F16 benar, kuantisasinya.
+model yang menghasilkan listing benar.
+
+### Akar bug "?????": tokenizer transformers 5.x lawan konverter tua
+
+Percobaan kedua tidak sempat menuntaskan uji korektnes — `convert_hf_to_gguf.py`
+berhasil menghasilkan GGUF F16 994 MB dalam semenit, tapi membangun `llama-cli`
+dari sumber baru sampai 76% saat batas waktu habis, jadi F16-nya tidak pernah
+diuji. Yang justru berharga muncul di tengah jalan:
+`pip install -r requirements-convert_hf_to_gguf.txt` menurunkan transformers dari
+5.15.1 ke 4.57.6, dan versi lama itu **crash** membaca `extra_special_tokens`
+karena bentuknya list, bukan dict.
+
+Isi `murid_lora/tokenizer_config.json` memastikan pergeserannya nyata:
+
+    extra_special_tokens : ['<|im_start|>', '<|im_end|>', ...]   list, bukan dict
+    added_tokens_decoder : TIDAK ADA
+    kunci lain           : backend, is_local, local_files_only  (bawaan 5.x)
+
+`added_tokens_decoder` itu tempat transformers 4.x menyimpan pemetaan id → token
+khusus, dan di berkas ini tidak ada sama sekali. Ollama membundel konverter dari
+galur llama.cpp yang lebih tua; diberi tata letak 5.x ia tidak crash seperti
+skrip di atas — ia gagal diam-diam, kehilangan token khusus, lalu tiap token
+keluar sebagai `?`.
+
+Dugaan awal bahwa `vocab.json` dan `merges.txt` hilang **salah**. Keduanya memang
+tidak ada, tapi itu normal: `tokenizer.json` sudah membawa seluruh kosakata.
+Masalahnya versi format, bukan berkas yang kurang.
+
+Menuntaskannya tidak butuh GPU sama sekali:
+
+1. gabung LoRA ke bobot dasar
+2. **salin tokenizer dari repo `Qwen2.5-0.5B-Instruct` asli**, jangan pakai yang
+   tersimpan di `murid_lora/` — langkah ini melewati seluruh masalah format
+3. `convert_hf_to_gguf.py` (~1 menit, sudah terbukti jalan)
+4. bangun `llama.cpp` (~30 menit CPU, sekali seumur hidup)
+5. ukur detik/listing, lalu bandingkan pada kuantisasi yang sama dengan pipeline
 
 ## Apa yang disumbang foto: mengenali benda, bukan menulis
 
@@ -481,3 +514,5 @@ keduanya diukur dengan proksi yang sama.
    Kemungkinan menurunkan `merek_ketat` 11,4% mendekati nol tanpa melatih ulang.
 3. **Perbaiki ekstraktor `jenis`.**
 4. **Samakan tumpukan penyajian** sebelum klaim kecepatan murid dipakai.
+   Akar bugnya sudah diketahui (tokenizer transformers 5.x lawan konverter tua)
+   dan langkahnya tidak butuh GPU — lihat bagian di atas.
