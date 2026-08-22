@@ -134,8 +134,24 @@ def muat_pipeline() -> dict:
 
 
 def jalankan_pipeline(foto: Path, platform: str, eksklusi: str,
-                      ambang: float, pid: str | None) -> dict:
-    """Satu produk lewat pipeline penuh. Cerminan dari main() retrieve_pipeline."""
+                      ambang: float, pid: str | None,
+                      keterangan: str = "", modal: int = 0) -> dict:
+    """Satu produk lewat pipeline penuh. Cerminan dari main() retrieve_pipeline.
+
+    `keterangan` adalah hal yang diketahui penjual tapi tidak terlihat di foto:
+    isi bersih, bahan, kemasan. Ia disambung ke string `fakta` hasil bacaan
+    foto, dan karena `fakta` dipakai tiga kali -- mencari tetangga, menulis, dan
+    sebagai bukti bagi penjaga -- satu sambungan itu cukup.
+
+    Efeknya paling terasa di penjaga. Tanpa keterangan, "1 Liter" yang ditulis
+    model dibuang karena angkanya tidak terbaca di foto, dan itu benar. Dengan
+    keterangan "1 liter", angkanya jadi berdasar dan dibiarkan. Penjaga memang
+    menolak yang DIKARANG, bukan yang diketahui penjual.
+
+    `modal` harga produksi. Tidak masuk ke listing sama sekali -- ia rahasia
+    penjual, bukan bahan tulisan. Dipakai hanya untuk menghitung margin
+    terhadap saran harga.
+    """
     P = muat_pipeline()
     df, k = P["df"], 5
     mulai = time.time()
@@ -157,8 +173,11 @@ def jalankan_pipeline(foto: Path, platform: str, eksklusi: str,
             blokir_baris = {int(x) for x in idxs}
             blokir_pid = set(df.loc[list(blokir_baris), "product_id"].astype(str))
 
-    fakta = rp.panggil(rp.MODEL_VISI, rp.PROMPT_VISI, images=[rp.muat_gambar(foto)])
+    fakta_foto = rp.panggil(rp.MODEL_VISI, rp.PROMPT_VISI,
+                            images=[rp.muat_gambar(foto)])
     t_lihat = time.time() - mulai
+    keterangan = (keterangan or "").strip()
+    fakta = f"{fakta_foto} | {keterangan}" if keterangan else fakta_foto
 
     cocok = P["indeks"].cari(fakta, k, blokir=blokir_baris)
     skor_teks = cocok[0][1] if cocok else 0.0
@@ -229,8 +248,23 @@ def jalankan_pipeline(foto: Path, platform: str, eksklusi: str,
                 h["judul"] = panjang
                 jejak.append("judul dipanjangkan dengan: " + ", ".join(tambah))
 
+    # Margin dihitung, tidak dimasukkan ke listing. Harga produksi itu rahasia
+    # penjual; yang perlu ia lihat cuma apakah saran harganya menutup modal.
+    untung = None
+    harga_saran = 0
+    try:
+        harga_saran = int(float(h.get("perkiraan_harga") or 0))
+    except (TypeError, ValueError):
+        harga_saran = 0
+    if modal > 0 and harga_saran > 0:
+        untung = {"modal": modal, "saran": harga_saran,
+                  "selisih": harga_saran - modal,
+                  "persen": round(100 * (harga_saran - modal) / modal, 1)}
+
     return {
-        "hasil": h, "vlm": fakta, "dikenal": bool(pakai),
+        "hasil": h, "vlm": fakta, "vlm_foto": fakta_foto,
+        "keterangan": keterangan, "untung": untung,
+        "dikenal": bool(pakai),
         "skor_visual": round(skor_visual, 3) if skor_visual is not None else None,
         "skor_teks": round(float(skor_teks), 2),
         "tetangga": tetangga["title_bersih"].tolist() if len(tetangga) else [],
@@ -445,9 +479,15 @@ class Handler(BaseHTTPRequestHandler):
             tmp.write_bytes(base64.b64decode(gambar.split(",", 1)[1]))
 
             if sistem == "pipeline":
+                try:
+                    modal = int(float(req.get("modal") or 0))
+                except (TypeError, ValueError):
+                    modal = 0
                 hasil = jalankan_pipeline(tmp, platform,
                                           req.get("eksklusi", "lini"),
-                                          float(req.get("ambang", 0.75)), pid)
+                                          float(req.get("ambang", 0.75)), pid,
+                                          keterangan=req.get("keterangan", ""),
+                                          modal=modal)
             elif sistem == "baseline":
                 hasil = jalankan_baseline(tmp, platform)
             elif sistem == "murid_vlm":
@@ -484,8 +524,8 @@ h1{font-size:26px;margin:0 0 4px;letter-spacing:-.02em}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--redup);
    margin:0 0 14px;font-weight:600}
 label{display:block;font-size:13px;color:var(--redup);margin:14px 0 5px}
-select,textarea,input[type=range]{width:100%;font:inherit;font-size:14px}
-select,textarea{padding:9px 11px;border:1px solid var(--garis);border-radius:5px;
+select,textarea,input[type=range],input[type=number]{width:100%;font:inherit;font-size:14px}
+select,textarea,input[type=number]{padding:9px 11px;border:1px solid var(--garis);border-radius:5px;
    background:var(--bg);color:var(--tinta)}
 textarea{resize:vertical;min-height:60px}
 button{background:var(--aksen);color:var(--bg);border:0;border-radius:5px;
@@ -552,6 +592,16 @@ img.pratayang{width:100%;max-height:260px;object-fit:contain;border-radius:6px;
         <option value="umum">umum — tanpa gaya platform</option>
       </select>
       <div id="opsiPipeline">
+        <label for="keterangan">Keterangan dari penjual — hal yang tidak terlihat di foto
+          <span style="color:var(--aksen)">(opsional)</span></label>
+        <textarea id="keterangan" placeholder="1 liter, kemasan pouch, isi 12 sachet"></textarea>
+        <p class="meta" style="margin-top:6px">Ini jadi bukti sah untuk penjaga.
+          Tanpa keterangan, ukuran yang ditulis model dibuang karena tidak terbaca
+          di foto.</p>
+        <label for="modal">Harga produksi <span style="color:var(--aksen)">(opsional)</span></label>
+        <input type="number" id="modal" placeholder="45000" min="0" step="500">
+        <p class="meta" style="margin-top:6px">Tidak masuk ke listing — dipakai
+          hanya untuk menghitung margin terhadap saran harga.</p>
         <label for="eksklusi">Eksklusi indeks — hanya berlaku untuk produk katalog</label>
         <select id="eksklusi">
           <option value="diri">diri — buang produk itu sendiri</option>
@@ -639,6 +689,7 @@ $("#jalan").onclick=async()=>{
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({sistem:ST.sistem,platform:$("#platform").value,
         gambar:ST.gambar,product_id:ST.pid,fakta:$("#fakta").value,
+        keterangan:$("#keterangan").value,modal:$("#modal").value,
         eksklusi:$("#eksklusi").value,ambang:$("#ambang").value})});
     const d=await r.json();
     if(d.galat)$("#keluar").innerHTML=`<p class="galat">${esc(d.galat)}</p>`;
@@ -667,7 +718,21 @@ function tampil(d){
   if(d.dikenal!==null&&d.dikenal!==undefined)
     s+=`<p style="margin-top:12px"><span class="tag ${d.dikenal?"":"no"}">
       ${d.dikenal?"dikenali katalog":"barang asing"}</span></p>`;
-  if(d.vlm)s+=`<div class="emas abu"><b>Yang terbaca dari foto</b><br>${esc(d.vlm)}</div>`;
+  if(d.untung){
+    const u=d.untung,rugi=u.selisih<0;
+    s+=`<div class="emas" style="border-color:${rugi?"var(--buruk)":"var(--baik)"}">
+      <b style="color:${rugi?"var(--buruk)":"var(--baik)"}">
+      ${rugi?"Saran harga DI BAWAH modal":"Margin"}</b><br>
+      modal Rp ${u.modal.toLocaleString("id-ID")} ·
+      saran Rp ${u.saran.toLocaleString("id-ID")} ·
+      ${u.selisih<0?"−":"+"}Rp ${Math.abs(u.selisih).toLocaleString("id-ID")}
+      (${u.persen}%)</div>`;
+  }
+  // bacaan foto dan keterangan penjual dipisah: yang pertama tebakan model,
+  // yang kedua fakta yang dijamin penjual
+  if(d.vlm_foto)s+=`<div class="emas abu"><b>Yang terbaca dari foto</b><br>${esc(d.vlm_foto)}</div>`;
+  else if(d.vlm)s+=`<div class="emas abu"><b>Yang terbaca dari foto</b><br>${esc(d.vlm)}</div>`;
+  if(d.keterangan)s+=`<div class="emas abu"><b>Keterangan penjual</b><br>${esc(d.keterangan)}</div>`;
   if(d.tetangga&&d.tetangga.length)
     s+=`<div class="emas abu"><b>Tetangga katalog</b><br>${d.tetangga.map(esc).join("<br>")}</div>`;
   if(d.jejak&&d.jejak.length)
