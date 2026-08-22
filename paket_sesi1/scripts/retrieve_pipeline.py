@@ -455,8 +455,8 @@ def tulis_ulang_deskripsi(desk: str, salah: list[str], fakta: str) -> str:
 
 
 def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
-                     plat: str | None, lex: dict,
-                     izinkan_merek: bool = False) -> tuple[str, list[str]]:
+                     plat: str | None, lex: dict, izinkan_merek: bool = False,
+                     tolak: set[str] | None = None) -> tuple[str, list[str]]:
     """Tambahkan kata kunci pendukung sampai judul mencapai panjang lazim platform.
 
     Tokopedia median 15 kata, tapi model 4B/7B tetap menulis 6 kata betapapun
@@ -474,6 +474,15 @@ def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
     lain, tidak pernah milik produk ini. Sekarang disaring. `izinkan_merek`
     mengembalikan perilaku lama, dan ada hanya supaya keduanya bisa dibandingkan
     dalam satu tabel ablasi.
+
+    `tolak` berisi kata yang baru saja dibuang saring_merek. Tanpa itu, fungsi
+    ini membatalkan keputusan penjaga: pada minyak goreng Sunco, penjaga membuang
+    "1 Liter" karena ukurannya tidak terbaca di foto, lalu langkah ini menambahkan
+    "liter" kembali dari judul tetangga dan judulnya tetap rusak.
+
+    Satuan takaran juga tidak pernah jadi kandidat. Kandidat wajib `isalpha()`,
+    jadi angka tidak akan pernah ikut ditambahkan -- artinya satuan apa pun yang
+    ditambahkan di sini pasti yatim sejak lahir.
     """
     if not plat or tetangga is None or not len(tetangga):
         return judul, []
@@ -491,8 +500,10 @@ def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
         for w in set(token(t)):
             hitung[w] += 1
     merek = lex.get("merek", set())
+    tolak = {w.lower() for w in (tolak or ())}
     kandidat = [w for w, c in sorted(hitung.items(), key=lambda x: -x[1])
                 if c >= 2 and w not in ada and w.isalpha() and len(w) > 2
+                and w not in SATUAN and w not in tolak
                 and (izinkan_merek or w not in merek)]
 
     tambah = []
@@ -883,7 +894,8 @@ def main():
                     if args.panjangkan and h.get("judul"):
                         panjang, tambah = panjangkan_judul(
                             str(h["judul"]), tetangga if pakai else None,
-                            profil, plat, lex, args.panjangkan_merek)
+                            profil, plat, lex, args.panjangkan_merek,
+                            tolak=set(h.get("dibuang") or ()))
                         if tambah:
                             h.setdefault("judul_mentah", h["judul"])
                             h["ditambah"] = tambah

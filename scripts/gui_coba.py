@@ -207,6 +207,7 @@ def jalankan_pipeline(foto: Path, platform: str, eksklusi: str,
                                               tetangga if pakai else None, P["lex"])
             if dibuang:
                 h["judul_mentah"], h["judul"] = h["judul"], bersih
+                h["dibuang"] = dibuang
                 jejak.append("penjaga membuang dari judul: " + ", ".join(dibuang))
         if h.get("deskripsi"):
             tet = tetangga if pakai else None
@@ -222,7 +223,8 @@ def jalankan_pipeline(foto: Path, platform: str, eksklusi: str,
         if h.get("judul"):
             panjang, tambah = rp.panjangkan_judul(
                 str(h["judul"]), tetangga if pakai else None,
-                P["profil"], plat, P["lex"])
+                P["profil"], plat, P["lex"],
+                tolak=set(h.get("dibuang") or ()))
             if tambah:
                 h["judul"] = panjang
                 jejak.append("judul dipanjangkan dengan: " + ", ".join(tambah))
