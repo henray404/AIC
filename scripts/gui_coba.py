@@ -375,7 +375,7 @@ def fakta_dari_produk(pid: str) -> str:
 
 
 class Handler(BaseHTTPRequestHandler):
-    def log_message(self, *a):
+    def log_message(self, *_):
         pass
 
     def _kirim(self, kode, tipe, isi: bytes):
@@ -536,8 +536,11 @@ img.pratayang{width:100%;max-height:260px;object-fit:contain;border-radius:6px;
       <div id="emas"></div>
       <img id="pratayang" class="pratayang" hidden alt="pratayang produk">
       <div id="opsiTeks" hidden>
-        <label for="fakta">Fakta produk — murid teks tidak melihat foto</label>
-        <textarea id="fakta" placeholder="jenis: Sepatu | merek: Keeping | harga: 177550"></textarea>
+        <label for="fakta">Keterangan produk — murid teks tidak melihat foto,
+          inilah satu-satunya masukannya, dan bentuk inilah yang dipakai melatihnya</label>
+        <textarea id="fakta" placeholder="jenis: Sepatu | merek: Keeping | kategori: fashion_perawatan | harga: 177550"></textarea>
+        <p class="meta" style="margin-top:6px">Kosongkan kalau memakai produk katalog —
+          keterangannya disusun otomatis dari judul aslinya.</p>
       </div>
       <label for="platform">Platform tujuan</label>
       <select id="platform">
@@ -556,6 +559,7 @@ img.pratayang{width:100%;max-height:260px;object-fit:contain;border-radius:6px;
         <label for="ambang">Ambang barang asing: <span id="ambangNilai">0,75</span></label>
         <input type="range" id="ambang" min="0.60" max="0.95" step="0.05" value="0.75">
       </div>
+      <div id="alasan"></div>
       <div class="baris"><button id="jalan" disabled>Jalankan</button></div>
     </div>
   </div>
@@ -565,6 +569,7 @@ img.pratayang{width:100%;max-height:260px;object-fit:contain;border-radius:6px;
 </div></div>
 <script>
 const ST={sistem:"pipeline",gambar:null,pid:null};
+const SIAP={},KURANG={};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
 
@@ -573,8 +578,12 @@ fetch("/api/sistem").then(r=>r.json()).then(list=>{
     <div class="opsi ${s.siap?"":"mati"} ${s.id==="pipeline"?"pilih":""}" data-id="${s.id}">
       <div><b>${esc(s.nama)}</b><span>${esc(s.sub)}</span>
       ${s.siap?"":`<code>belum siap — ${esc(s.kurang)}</code>`}</div></div>`).join("");
+  list.forEach(s=>{SIAP[s.id]=s.siap;KURANG[s.id]=s.kurang;});
+  // Kartu yang perkakasnya belum ada tetap bisa dipilih. Versi pertama menolak
+  // kliknya, dan akibatnya kotak "Fakta produk" -- satu-satunya masukan murid
+  // teks, dan bentuk yang dipakai melatihnya -- tak pernah bisa dilihat sama
+  // sekali di mesin yang belum memasang transformers.
   document.querySelectorAll(".opsi").forEach(el=>el.onclick=()=>{
-    if(el.classList.contains("mati"))return;
     document.querySelectorAll(".opsi").forEach(o=>o.classList.remove("pilih"));
     el.classList.add("pilih");ST.sistem=el.dataset.id;sesuaikan();
   });
@@ -585,7 +594,13 @@ function sesuaikan(){
   const teks=ST.sistem==="murid_teks";
   $("#opsiTeks").hidden=!teks;
   $("#opsiPipeline").hidden=ST.sistem!=="pipeline";
-  $("#jalan").disabled=teks?false:!ST.gambar;
+  const b=$("#jalan"),siap=SIAP[ST.sistem]!==false;
+  b.disabled=!siap||!(teks||ST.gambar);
+  b.textContent=siap?"Jalankan":"Belum terpasang";
+  $("#alasan").innerHTML=siap?"":
+    `<p class="galat" style="margin:12px 0 0">Belum bisa dijalankan di mesin ini.
+     Pasang dulu:<br><code style="color:var(--tinta)">${esc(KURANG[ST.sistem]||"")}</code>
+     <br>lalu muat ulang halaman.</p>`;
 }
 $("#ambang").oninput=e=>{
   $("#ambangNilai").textContent=(+e.target.value).toFixed(2).replace(".",",");
