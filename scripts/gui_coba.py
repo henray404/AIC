@@ -40,8 +40,8 @@ import pandas as pd
 import retrieve_pipeline as rp
 
 PROJECT = Path(__file__).resolve().parent.parent
-ADAPTER_TEKS = PROJECT / "hasil_sesi2" / "murid_lora"
-ADAPTER_VLM = PROJECT / "hasil_sesi2" / "murid_vlm_lora"
+ADAPTER_TEKS = PROJECT / "model_sulingan" / "murid_teks_0.5b"
+ADAPTER_VLM = PROJECT / "model_sulingan" / "murid_vlm_3b"
 DASAR_TEKS = "Qwen/Qwen2.5-0.5B-Instruct"
 DASAR_VLM = "Qwen/Qwen2.5-VL-3B-Instruct"
 

@@ -35,3 +35,12 @@ venv/
 
 # Paket kirim ke server sewaan (hasil generasi, bisa dibuat ulang)
 hasil_sesi1/
+
+# Bobot adapter dan tokenizer: 184 MB, hasil latihan bukan sumber. README,
+# adapter_config.json, dan chat_template tetap masuk git supaya struktur dan
+# hiperparameternya terlacak.
+model_sulingan/*/adapter_model.safetensors
+model_sulingan/*/tokenizer.json
+
+# Keluaran eksperimen sesi 2 (219 MB). Sama seperti hasil_sesi1.
+hasil_sesi2/
