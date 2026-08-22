@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import statistics as st
 from pathlib import Path
@@ -101,7 +102,8 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
     m: dict[str, list] = {k: [] for k in
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
                            "merek_karang", "merek_sempit", "merek_ketat",
-                           "harga_cakupan", "panjang_patuh", "inti",
+                           "harga_cakupan", "harga_logerr", "harga_2x",
+                           "panjang_patuh", "inti",
                            "desk_char", "desk_spek", "desk_asing", "desk_klaim",
                            "desk_sampah", "desk_ulang", "desk_potong", "detik")}
     per_platform: dict[str, list] = {}
@@ -181,6 +183,17 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
                 m["harga_cakupan"].append(harga > 0)
             if harga > 0 and asli > 0 and plat in (r.get("source"), "umum"):
                 m["harga_err"].append(abs(harga - asli) / asli)
+                # harga_err ASIMETRIS: menebak 100rb untuk barang 20rb = 400%,
+                # sebaliknya cuma 80%. Model yang menebak angka bulat (baseline
+                # 12b memakai hanya 34 nilai unik untuk 397 tebakan, kebanyakan
+                # 100rb-200rb) selalu kelebihan pada barang murah, dan 54% produk
+                # di katalog ini di bawah Rp 50rb -- galatnya jadi terlihat jauh
+                # lebih besar dari kesalahannya yang sebenarnya.
+                #
+                # Dua ukuran simetris ini menghukum kelebihan dan kekurangan
+                # sama berat. |log| 0,69 berarti meleset tepat dua kali lipat.
+                m["harga_logerr"].append(abs(math.log(harga / asli)))
+                m["harga_2x"].append(0.5 <= harga / asli <= 2.0)
                 # tebakan mentah model, disimpan sebelum ditimpa hitungan katalog
                 hm = h.get("harga_model")
                 try:
@@ -231,6 +244,9 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
         "json_valid%": round(100 * rata("json_valid"), 1),
         "harga_err%": round(100 * st.median(m["harga_err"]), 1) if m["harga_err"] else float("nan"),
         "harga_cakupan%": round(100 * rata("harga_cakupan"), 1),
+        "harga_logerr": (round(st.median(m["harga_logerr"]), 3)
+                         if m["harga_logerr"] else float("nan")),
+        "harga_2x%": round(100 * rata("harga_2x"), 1),
         "n_harga": len(m["harga_err"]),
         "harga_model_err%": (round(100 * st.median(m["harga_model_err"]), 1)
                              if m["harga_model_err"] else float("nan")),
@@ -287,7 +303,8 @@ def main():
         print()
 
     kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "spek_karang%",
-             "harga_cakupan%", "n_harga", "merek_sempit%", "merek_ketat%",
+             "harga_logerr", "harga_2x%", "harga_cakupan%", "n_harga",
+             "merek_sempit%", "merek_ketat%",
              "panjang_patuh%", "inti", "detik", "detik_listing"]
     kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
                   "desk_sampah%", "desk_ulang%", "desk_potong%"]
@@ -334,6 +351,15 @@ def _selfcheck():
                                        rec("b", 300, dua, 6.0), rec("c", 400, dua, 6.0)])
         hp, hb = nilai(pipe, {}), nilai(base, {})
         assert hp["harga_err%"] == 0.0 and hb["harga_err%"] == 200.0, (hp, hb)
+        # Asimetri harga_err: dua tebakan yang sama salahnya secara berlipat
+        # -- 2x kelebihan dan 2x kekurangan -- harus dinilai sama oleh ukuran
+        # simetris, tapi TIDAK oleh harga_err.
+        lebih = tulis(d, "lebih.jsonl", [rec("a", 200, dua, 1.0)])   # asli 100
+        kurang = tulis(d, "kurang.jsonl", [rec("a", 50, dua, 1.0)])
+        hl, hk = nilai(lebih, {}), nilai(kurang, {})
+        assert hl["harga_err%"] == 100.0 and hk["harga_err%"] == 50.0, (hl, hk)
+        assert hl["harga_logerr"] == hk["harga_logerr"], (hl, hk)
+        assert hl["harga_2x%"] == hk["harga_2x%"] == 100.0, (hl, hk)
         assert hp["harga_cakupan%"] == 33.3 and hb["harga_cakupan%"] == 100.0, (hp, hb)
         # cakupan disamakan -> selisih 200 poin tadi lenyap seluruhnya
         ids = id_berharga(pipe)
