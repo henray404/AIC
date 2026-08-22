@@ -556,8 +556,30 @@ def panjangkan_judul(judul: str, tetangga: pd.DataFrame | None, profil: dict,
             hitung[w] += 1
     merek = lex.get("merek", set())
     tolak = {w.lower() for w in (tolak or ())}
+    # Suara mayoritas, bukan "muncul di minimal dua tetangga". Ambang lama tidak
+    # bisa membedakan deskriptor produk dari penanda varian produk LAIN. Pada
+    # keripik pisang cokelat, kata di kelima tetangga cuma "coklat" dan "pisang";
+    # "strawberry" muncul di sebagian dan tetap lolos, lalu masuk ke judul
+    # padahal penjual sudah menyatakan rasanya cokelat.
+    #
+    # Kata yang disepakati mayoritas tetangga menggambarkan JENIS barangnya;
+    # kata yang cuma dipunyai sebagian justru yang membedakan mereka satu sama
+    # lain, dan itu persis yang tidak boleh dipinjam.
+    #
+    # Ongkosnya nyata dan sudah diukur pada 389 judul S3: kata yang ditambahkan
+    # turun 2,39 -> 1,44 per judul, dan yang mencapai panjang target turun
+    # 77,4% -> 43,2%. Tetap diambil, karena yang berhenti ditambahkan ternyata
+    # halusinasi semua:
+    #
+    #   Minyak Goreng Pouch Kunci Mas  -> solo, smg, jog   (kota pengiriman)
+    #   Minyak Goreng Pouch            -> sedaap           (merek lain)
+    #   Mie Instan K-Rose Premium      -> chicken, cheese  (varian produk lain)
+    #
+    # Artinya panjang_patuh% versi lama sebagian palsu -- dipompa kata yang
+    # tidak menggambarkan produknya sama sekali.
+    n_tetangga = len(tetangga)
     kandidat = [w for w, c in sorted(hitung.items(), key=lambda x: -x[1])
-                if c >= 2 and w not in ada and w.isalpha() and len(w) > 2
+                if c * 2 > n_tetangga and w not in ada and w.isalpha() and len(w) > 2
                 and w not in SATUAN and w not in tolak
                 and (izinkan_merek or w not in merek)]
 
