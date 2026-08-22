@@ -307,6 +307,18 @@ def muat_lexicon() -> dict:
             "umum": set(lex.get("umum", []))}
 
 
+# Satuan takaran yang tidak berdiri sendiri: tanpa angka di depannya, kata-kata
+# ini tidak menerangkan apa pun. Sengaja hanya satuan tak ambigu -- "set", "box",
+# dan "pack" tidak masuk karena sering jadi bagian nama produk ("Set Alat Makan").
+SATUAN = {
+    "liter", "ltr", "lt", "mililiter", "ml", "cc",
+    "gram", "gr", "kilogram", "kg", "miligram", "mg", "ons",
+    "meter", "sentimeter", "cm", "milimeter", "mm", "inci", "inch",
+    "watt", "volt", "ampere", "mah", "hertz",
+    "lembar", "butir", "biji", "tablet", "kapsul", "sachet", "helai", "batang",
+}
+
+
 def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
                  lex: dict) -> tuple[str, list[str]]:
     """Buang kata spesifik di judul yang tidak didukung foto maupun katalog.
@@ -340,12 +352,23 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
     angka_terlihat = set(re.findall(r"\d+", fakta or ""))
 
     simpan, dibuang = [], []
+    # Satuan mengikuti angkanya. Membuang "1" dari "Minyak Goreng Sunco 1 Liter"
+    # tanpa membuang "Liter" menyisakan "Minyak Goreng Sunco Liter" -- penjaganya
+    # benar menangkap ukuran karangan, tapi judulnya rusak tata bahasa.
+    buang_satuan = False
     for w in judul.split():
         bersih = re.sub(r"[^\w\.\-/]", "", w).lower()
         angka_kata = re.findall(r"\d+", bersih)
         if angka_kata and not all(a in angka_terlihat for a in angka_kata):
             dibuang.append(w)                      # ukuran/isi/jumlah yang dikarang
-        elif not bersih or len(bersih) < 3 or not bersih.isalpha():
+            buang_satuan = True
+            continue
+        if buang_satuan and bersih in SATUAN:
+            dibuang.append(w)                      # satuan yatim, angkanya sudah pergi
+            buang_satuan = False
+            continue
+        buang_satuan = False
+        if not bersih or len(bersih) < 3 or not bersih.isalpha():
             simpan.append(w)                       # tanda baca & kode varian sah
         elif bersih in dukungan_foto or bersih in lex["jenis"]:
             simpan.append(w)                       # terbaca di foto, atau kata jenis
@@ -361,9 +384,20 @@ def saring_merek(judul: str, fakta: str, tetangga: pd.DataFrame | None,
 
     # sisa kata penghubung yang menggantung setelah penyaringan, mis. judul yang
     # berakhir "... Gaun Floral Merek" karena penjelasnya sudah dibuang
-    while simpan and re.sub(r"\W", "", simpan[-1]).lower() in {
-            "merek", "tidak", "belum", "dan", "untuk", "dengan", "no", "brand"}:
-        simpan.pop()
+    GANTUNG = {"merek", "tidak", "belum", "dan", "untuk", "dengan", "no", "brand"}
+    while simpan:
+        akhir = re.sub(r"\W", "", simpan[-1]).lower()
+        if akhir in GANTUNG:
+            simpan.pop()
+            continue
+        # Satuan di ekor hanya yatim kalau tidak didahului angka. Tanpa syarat
+        # ini "Minyak Goreng Sunco 2 Liter" yang ukurannya SAH ikut terpotong
+        # jadi "... Sunco 2".
+        if akhir in SATUAN and not (len(simpan) > 1
+                                    and re.search(r"\d", simpan[-2])):
+            simpan.pop()
+            continue
+        break
     return " ".join(simpan).strip(" -/&,"), dibuang
 
 
