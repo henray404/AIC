@@ -56,3 +56,9 @@ tokopedia_gambar1.tar
 /murid_vlm_lora/
 /guru.jsonl
 model_sulingan.zip
+
+# Berkas penilaian manusia: HTML memuat foto produk base64 (2,8 MB), dan
+# hasil.json memuat penilaian yang belum dianalisis. Keduanya hasil kerja,
+# bisa dibuat ulang dengan scripts/buat_penilaian.py.
+penilaian/*.html
+penilaian/hasil*.json
