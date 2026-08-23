@@ -6,13 +6,31 @@ hasil `retrieve_pipeline.py`, jadi dua konfigurasi bisa diadu pada sampel identi
     python scripts/eval_listing.py data_drive/eval/pipeline_demo.jsonl
     python scripts/eval_listing.py A.jsonl B.jsonl      # bandingkan dua versi
 
-Metrik:
+Metrik yang dipakai:
   json_valid      keluaran bisa diurai jadi JSON dan ada judulnya
-  harga_err       |tebakan - asli| / asli, median (0 = sempurna)
-  spek_karang     judul memuat angka/satuan yang tidak terbaca model di foto
-  merek_karang    judul memuat kata yang tidak ada di foto maupun di katalog
+  harga_err       |tebakan - asli| / asli, median. ASIMETRIS -- pakai
+                  harga_logerr dan harga_2x untuk membandingkan sistem
+  harga_logerr    median |log(tebakan/asli)|, simetris. 0,69 = meleset 2x
+  harga_2x        porsi tebakan dalam rentang setengah sampai dua kali
+  harga_cakupan   porsi listing yang berani menyebut harga
+  kategori_sah    kategori ada di taksonomi tujuh kelas
+  kategori_benar  kategori sama dengan label katalog. BATAS BAWAH -- sebagian
+                  label katalognya sendiri keliru, lihat CACAT_LABEL_KATEGORI.md
+  kata_asing      judul memuat kata yang tidak ada di bacaan foto. Satu-satunya
+                  ukuran halusinasi yang tervalidasi manusia (recall 93,3%,
+                  presisi 35%). Presisi 35% berarti angka mutlaknya BUKAN kadar
+                  halusinasi -- yang bermakna selisih antar sistem
   panjang_patuh   panjang judul masuk rentang target platform
   inti            berapa bagian kata judul asli yang berhasil disebut ulang
+
+Metrik yang GUGUR, disembunyikan kecuali dengan --semua:
+  spek_karang, merek_sempit, merek_ketat, desk_spek, desk_asing
+
+Penilaian manusia pada 51 listing mengukur recall ketiganya 0-9%: semuanya
+hanya mencari nama merek dan istilah langka, sehingga melewatkan warna,
+aroma, rasa, dan sifat produk -- kata Indonesia lazim yang justru paling
+sering dikarang. Tetap dihitung supaya angka lama bisa direproduksi.
+Lihat docs/PENILAIAN_MANUSIA.md.
 """
 
 from __future__ import annotations
@@ -333,6 +351,10 @@ def main():
                     help="nilai hanya platform ini, dipisah koma. Perlu kalau dua "
                          "berkas menulis himpunan platform yang berbeda — tanpa ini "
                          "keduanya dibandingkan atas dasar yang tidak sama.")
+    ap.add_argument("--semua", action="store_true",
+                    help="tampilkan juga metrik yang sudah GUGUR "
+                         "(spek_karang, merek_sempit, merek_ketat, desk_spek, "
+                         "desk_asing) -- hanya untuk mereproduksi angka lama")
     ap.add_argument("--samakan-cakupan", default=None, metavar="BERKAS",
                     help="nilai semua berkas hanya pada produk yang BERKAS ini "
                          "berani beri harga. Perlu karena pipeline mengundurkan "
@@ -352,13 +374,24 @@ def main():
         print(f"platform dinilai: {sorted(hanya)}")
         print()
 
-    kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "spek_karang%",
+    # Metrik yang GUGUR setelah penilaian manusia tidak lagi dicetak secara
+    # bawaan. Ia tetap dihitung dan tetap ada di dict keluaran supaya angka lama
+    # bisa direproduksi, tapi mencetaknya berdampingan dengan metrik yang sah
+    # membuatnya terbaca sebagai ukuran biasa -- dan itu jalan paling mungkin
+    # angka gugur terkutip ke laporan. Pakai --semua untuk menampilkannya.
+    GUGUR = {"spek_karang%", "merek_sempit%", "merek_ketat%",
+             "desk_spek%", "desk_asing%"}
+
+    kunci = ["berkas", "n_listing", "json_valid%", "harga_err%",
              "harga_logerr", "harga_2x%", "harga_cakupan%", "n_harga",
              "kategori_sah%", "kategori_benar%", "kata_asing%",
-             "merek_sempit%", "merek_ketat%",
+             "spek_karang%", "merek_sempit%", "merek_ketat%",
              "panjang_patuh%", "inti", "detik", "detik_listing"]
     kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
                   "desk_sampah%", "desk_ulang%", "desk_potong%"]
+    if not args.semua:
+        kunci = [k for k in kunci if k not in GUGUR]
+        kunci_desk = [k for k in kunci_desk if k not in GUGUR]
     lebar = {k: max([len(k)] + [len(str(h[k])) for h in hasil]) for k in kunci}
     print(" | ".join(k.ljust(lebar[k]) for k in kunci))
     print("-+-".join("-" * lebar[k] for k in kunci))
@@ -374,6 +407,20 @@ def main():
     print()
     for h in hasil:
         print(f"{h['berkas']}: median kata judul per platform {h['kata_judul']}")
+
+    print()
+    print("  kata_asing%   satu-satunya ukuran halusinasi yang tervalidasi manusia")
+    print("                (recall 93,3%, presisi 35% pada 51 listing berlabel).")
+    print("                PRESISI 35% berarti dua dari tiga tuduhannya sebenarnya")
+    print("                sah -- angka mutlaknya BUKAN kadar halusinasi. Yang")
+    print("                bermakna selisih antar sistem. Lihat")
+    print("                docs/PENILAIAN_MANUSIA.md.")
+    if args.semua:
+        print()
+        print("  PERINGATAN: spek_karang, merek_sempit, merek_ketat, desk_spek,")
+        print("  dan desk_asing sudah GUGUR -- recall-nya 0-9% terhadap penilaian")
+        print("  manusia. Ditampilkan hanya untuk mereproduksi angka lama; jangan")
+        print("  dikutip sebagai ukuran halusinasi.")
 
 
 def _selfcheck():
