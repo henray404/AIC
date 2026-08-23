@@ -19,6 +19,7 @@ import io
 import json
 import math
 import re
+import sys
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -28,6 +29,19 @@ import requests
 from PIL import Image
 
 from build_train_pairs import clean_title
+
+# Konsol Windows memakai cp1252, dan bacaan model kerap memuat karakter di luar
+# jangkauannya -- satu "+" superskrip pada nama produk sempat mematikan jalan
+# 100 produk di tengah fase 1 dan membuang hampir satu jam kerja GPU. Di server
+# Linux tidak pernah muncul karena konsolnya UTF-8. Cetakan di sini cuma
+# diagnostik, jadi mengganti karakter yang tak terwakili jauh lebih baik
+# daripada menghentikan seluruh proses.
+for _aliran in (sys.stdout, sys.stderr):
+    if hasattr(_aliran, "reconfigure"):
+        try:
+            _aliran.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
 
 PROJECT = Path(__file__).resolve().parent.parent
 SUMBER = PROJECT / "data_drive" / "merged" / "merged_local.parquet"
