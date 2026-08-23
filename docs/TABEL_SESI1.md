@@ -18,24 +18,21 @@ melatih model sulingan. Halaman ini menggantikannya seluruhnya.
 > bawah tetap sebanding satu sama lain. Lihat
 > **[PERBAIKAN_SETELAH_S3.md](PERBAIKAN_SETELAH_S3.md)**.
 
-> ## PERINGATAN: dua metrik di halaman ini TIDAK SAH
+> ## Metrik halusinasi: yang lama gugur, yang baru tervalidasi
 >
-> Penilaian manusia (51 listing, 1 penilai, 23 Agustus 2026) membantah
-> `brand_strict%` dan `spec_halluc%`:
+> Penilaian manusia (51 listing, buta, 23 Agustus 2026) membantah tiga metrik
+> yang selama ini jadi klaim terkuat:
 >
-> | metrik | recall | presisi | artinya |
+> | metrik | recall | presisi | putusan |
 > |---|---:|---:|---|
-> | `brand_strict%` | **6,7%** | 100% | melewatkan 93% halusinasi yang dilihat manusia |
-> | `spec_halluc%` | **0,0%** | — | tidak menangkap satu pun |
-> | `desc_ungrounded%` | **9,1%** | 100% | melewatkan 91% |
+> | `brand_strict%` | 6,7% | 100% | **gugur** — melewatkan 93% |
+> | `spec_halluc%` | 0,0% | — | **gugur** — tak menangkap satu pun |
+> | `desc_ungrounded%` | 9,1% | 100% | **gugur** — melewatkan 91% |
+> | **`ungrounded_words%`** | **93,3%** | **35%** | **dipakai sekarang** |
 >
-> Presisi 100% berarti tuduhannya selalu benar — tapi ia **hampir tidak pernah
-> menuduh**. Detektor yang selalu menjawab "bersih" tetap terlihat sepakat
-> 72–80% dengan manusia semata karena halusinasinya memang jarang.
->
-> Sebabnya: ketiganya hanya mencari **nama merek dan istilah langka**. Yang
-> dilewatkan adalah warna, aroma, rasa, dan sifat produk — semuanya kata
-> Indonesia lazim, jadi lolos aturan `w not in lex["umum"]`:
+> Ketiga yang gugur hanya mencari nama merek dan istilah langka. Yang
+> dilewatkan warna, aroma, rasa, dan sifat produk — semuanya kata Indonesia
+> lazim:
 >
 > ```
 > "Sepatu Lari Pria Hitam"             foto: sepatu Puma Future
@@ -43,12 +40,19 @@ melatih model sulingan. Halaman ini menggantikannya seluruhnya.
 > "Cheek & Lip Tint Warna Merah Muda"  foto: Implora liptint
 > ```
 >
-> **Jangan kutip klaim halusinasi dari halaman ini.** Analisis lengkapnya di
-> [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
+> `ungrounded_words%` (kolom `kata_asing%` di keluaran) memakai aturan paling
+> sederhana: ada kata di judul yang tidak muncul di bacaan foto. Empat varian
+> lain diuji dan kalah, termasuk daftar atribut warna/rasa/bahan buatan tangan.
+>
+> **Presisinya 35%** — dua dari tiga tuduhan sebenarnya sah, karena kata jenis
+> dan kata jualan ikut terhukum. Jadi angka mutlaknya tidak berarti "sekian
+> persen listing berhalusinasi"; yang bermakna **selisih antar sistem**, karena
+> semuanya dihukum dengan cara yang sama.
 >
 > Metrik lain tidak terpengaruh: `title_recall`, `price_logerr`,
-> `price_within2x%`, dan `category_valid%` punya definisi objektif yang tidak
-> bergantung pada penilaian.
+> `price_within2x%`, `category_valid%` punya definisi objektif.
+>
+> Rinciannya di [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
 
 ## Sistem yang diuji
 
@@ -85,10 +89,11 @@ sistem tidak menemukan jawabannya sendiri.
 | `price_within2x%` | porsi tebakan antara setengah sampai dua kali harga asli |
 | `price_coverage%` | porsi listing yang berani menyebut harga |
 | `abstain%` | porsi produk yang sistem akui tidak dikenalinya |
-| `brand_lenient%` | merek/istilah tak berdasar, katalog ikut memaafkan. **Melingkar** — penjaga membuang persis apa yang metrik ini ukur |
-| `brand_strict%` | sama, katalog **tidak** memaafkan. Satu-satunya ukuran halusinasi yang setara antar sistem |
-| `spec_halluc%` | angka di judul yang tidak ada di bacaan foto |
-| `desc_ungrounded%` | kata di deskripsi yang tak berdasar foto maupun katalog |
+| `ungrounded_words%` | judul yang memuat kata tak ada di bacaan foto. **Satu-satunya ukuran halusinasi yang tervalidasi manusia** (recall 93,3%, presisi 35%). Bandingkan selisihnya, bukan nilai mutlaknya |
+| ~~`brand_strict%`~~ | **GUGUR** — recall 6,7%, hanya mencari nama merek dan istilah langka |
+| ~~`spec_halluc%`~~ | **GUGUR** — recall 0,0% |
+| ~~`desc_ungrounded%`~~ | **GUGUR** — recall 9,1% |
+| ~~`brand_lenient%`~~ | **GUGUR** — melingkar, penjaga membuang persis apa yang ia ukur |
 | `length_ok%` | judul yang panjangnya masuk rentang lazim platform |
 | `sec/listing` | detik per listing, bukan per produk |
 
@@ -96,12 +101,16 @@ sistem tidak menemukan jawabannya sendiri.
 
 ## A. Tiga tingkat exclusion
 
-| system | exclusion | abstain% | price_err% | price_logerr | price_within2x% | price_coverage% | spec_halluc% | brand_strict% | length_ok% | title_recall | sec/listing |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| RAG pipeline | self | 30,7 | 23,7 | 0,258 | 74,0 | 70,3 | 0,6 | 7,0 | 56,2 | 0,444 | 1,41 |
-| **RAG pipeline** | **product line** | 56,1 | 29,9 | 0,300 | 72,4 | 44,5 | 0,9 | 3,6 | 39,7 | 0,364 | 1,39 |
-| RAG pipeline | category | 81,3 | 38,8 | 0,409 | 62,6 | 18,9 | 1,2 | 1,1 | 22,8 | 0,319 | 1,37 |
-| Baseline 12B | — | — | 76,6 | 0,788 | 45,5 | 85,0 | 24,1 | 14,4 | 55,4 | 0,267 | 1,91 |
+| system | exclusion | abstain% | price_err% | price_logerr | price_within2x% | price_coverage% | **ungrounded_words%** | length_ok% | title_recall | sec/listing |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| RAG pipeline | self | 30,7 | 23,7 | 0,258 | 74,0 | 70,3 | 90,3 | 56,2 | 0,444 | 1,41 |
+| **RAG pipeline** | **product line** | 56,1 | 29,9 | 0,300 | 72,4 | 44,5 | **85,4** | 39,7 | 0,364 | 1,39 |
+| RAG pipeline | category | 81,3 | 38,8 | 0,409 | 62,6 | 18,9 | **83,7** | 22,8 | 0,319 | 1,37 |
+| Baseline 12B | — | — | 76,6 | 0,788 | 45,5 | 85,0 | 99,4 | 55,4 | 0,267 | 1,91 |
+
+Kolom halusinasi lama (`spec_halluc%`, `brand_strict%`) dibuang dari tabel ini —
+keduanya gugur. Angka lamanya masih bisa direproduksi dengan `git checkout
+sesi-3`.
 
 Deskripsi:
 
@@ -124,12 +133,12 @@ Pipeline menyetel harga 0 untuk barang tak dikenal, dan baris itu keluar dari
 `price_err` sepenuhnya. Di sini kedua sisi dinilai hanya pada produk yang
 pipeline berani beri harga.
 
-| system | exclusion | price_err% | price_logerr | price_within2x% | price_coverage% | spec_halluc% | brand_strict% | length_ok% | title_recall |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| RAG pipeline | self | 23,0 | 0,248 | 78,0 | 100,0 | 0,0 | 7,2 | 77,3 | 0,488 |
-| **RAG pipeline** | **product line** | 29,9 | 0,300 | 72,4 | 100,0 | 0,2 | 8,1 | 78,2 | 0,446 |
-| RAG pipeline | category | 35,9 | 0,350 | 67,6 | 31,8 | 0,2 | 1,9 | 32,6 | 0,334 |
-| Baseline 12B | — | 104,1 | 0,964 | 40,5 | 91,1 | 22,5 | 13,7 | 55,1 | 0,272 |
+| system | exclusion | price_err% | price_logerr | price_within2x% | price_coverage% | **ungrounded_words%** | length_ok% | title_recall |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| RAG pipeline | self | 23,0 | 0,248 | 78,0 | 100,0 | 96,5 | 77,3 | 0,488 |
+| **RAG pipeline** | **product line** | 29,9 | 0,300 | 72,4 | 100,0 | **95,8** | 78,2 | 0,446 |
+| RAG pipeline | category | 35,9 | 0,350 | 67,6 | 31,8 | **88,7** | 32,6 | 0,334 |
+| Baseline 12B | — | 104,1 | 0,964 | 40,5 | 91,1 | 99,3 | 55,1 | 0,272 |
 
 `price_err%` baseline melar dari 76,6 ke 104,1 di subset ini, tapi
 `price_logerr` cuma bergerak 0,788 → 0,964 dan `price_within2x%` nyaris tidak
@@ -148,11 +157,11 @@ lebih berat daripada kekurangan.
 Ambang kemiripan visual CLIP. Di bawahnya produk dianggap asing: listing
 ditulis murni dari foto, tanpa merek dan harga dari katalog.
 
-| CLIP threshold | abstain% | price_coverage% | price_err% | price_logerr | brand_strict% | length_ok% | title_recall |
+| CLIP threshold | abstain% | price_coverage% | price_err% | price_logerr | **ungrounded_words%** | length_ok% | title_recall |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| 0,70 | 39,2 | 61,3 | 34,0 | 0,336 | 5,6 | 51,6 | 0,383 |
-| **0,75** | 56,1 | 44,5 | 29,9 | 0,300 | 3,6 | 39,7 | 0,364 |
-| 0,80 | 72,0 | 28,7 | 25,5 | 0,266 | 2,0 | 30,0 | 0,340 |
+| 0,70 | 39,2 | 61,3 | 34,0 | 0,336 | 87,2 | 51,6 | 0,383 |
+| **0,75** | 56,1 | 44,5 | 29,9 | 0,300 | **85,4** | 39,7 | 0,364 |
+| 0,80 | 72,0 | 28,7 | 25,5 | 0,266 | **82,8** | 30,0 | 0,340 |
 
 **Ini pertukaran murni, bukan parameter yang terbukti optimal.** Makin longgar
 ambangnya, makin sering sistem menjawab dan makin sering pula ia meleset. Tidak
@@ -170,11 +179,16 @@ Judul Tokopedia bermedian 15 kata, tapi model 4B menulis 6 kata betapapun
 dimintanya. Kata tambahan diambil dari judul produk kembar di katalog — dan
 sempat termasuk nama mereknya.
 
-| system | title extender | brand_strict% | length_ok% | price_err% | title_recall |
+| system | title extender | **ungrounded_words%** | length_ok% | price_err% | title_recall |
 |---|---|---:|---:|---:|---:|
-| RAG pipeline | merek ikut ditambahkan | 10,5 | 41,9 | 29,9 | 0,371 |
-| **RAG pipeline** | **merek disaring** | 3,6 | 39,7 | 29,9 | 0,364 |
-| Baseline 12B | — | 14,4 | 55,4 | 76,6 | 0,267 |
+| RAG pipeline | merek ikut ditambahkan | 85,9 | 41,9 | 29,9 | 0,371 |
+| **RAG pipeline** | **merek disaring** | **85,4** | 39,7 | 29,9 | 0,364 |
+| Baseline 12B | — | 99,4 | 55,4 | 76,6 | 0,267 |
+
+Dengan ukuran yang tervalidasi, ablasi ini nyaris tidak menggeser apa pun
+(85,9 → 85,4). Metrik lama mencatat 10,5 → 3,6 dan terlihat seperti perbaikan
+besar — itu karena ia hanya menghitung nama merek, dan menyaring merek memang
+menghilangkan tepat apa yang ia ukur.
 
 | versi | judul yang dihasilkan |
 |---|---|
@@ -192,19 +206,26 @@ poin kepatuhan panjang.
 Inilah tabel yang di sesi sebelumnya tidak bisa dibuat: baseline 12B kini ikut
 dijalankan pada 492 produk yang sama dengan kedua student.
 
-| system | input | params | title_recall | brand_strict% | spec_halluc% | desc_ungrounded% | length_ok% | sec/listing |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| **RAG pipeline** | foto | 4B+7B | **0,364** | **3,6** | **0,9** | **0,0** | 39,7 | **1,39** |
-| Student VLM | foto | 3B | 0,315 | 11,4 | 12,3 | 8,7 | 4,1 | 2,77 \* |
-| Baseline 12B | foto | 12B | 0,267 | 14,4 | 24,1 | 28,3 | **55,4** | 1,91 |
-| Student text | ketikan | 0,5B | 0,208 | 19,2 † | 11,1 | 16,1 | 2,3 | 1,58 \* |
+| system | input | params | title_recall | **ungrounded_words%** | length_ok% | sec/listing |
+|---|---|---:|---:|---:|---:|---:|
+| **RAG pipeline** | foto | 4B+7B | **0,364** | 85,4 | 39,7 | **1,39** |
+| Student VLM | foto | 3B | 0,315 | **81,5** | 4,1 | 2,77 \* |
+| Baseline 12B | foto | 12B | 0,267 | 99,4 | **55,4** | 1,91 |
+| Student text | ketikan | 0,5B | 0,208 | 100,0 † | 2,3 | 1,58 \* |
 
 \* Kedua student diukur lewat HF transformers bf16 tanpa batch, sementara
 pipeline dan baseline lewat Ollama/llama.cpp Q4. Angka waktunya mengukur
 tumpukan penyajian, bukan model — **jangan dipakai**.
 
-† Student text tidak melihat foto, jadi `brand_strict%` menghukum tiap katanya.
-Angka itu tidak berarti untuknya.
+† Student text tidak melihat foto sama sekali, jadi bacaan fotonya kosong dan
+setiap kata otomatis terhitung asing. 100,0% di sini berarti "tidak bisa
+diukur", bukan "selalu berhalusinasi".
+
+**Student VLM sedikit lebih baik dari pipeline** di ukuran ini (81,5 lawan
+85,4) — hal yang tidak terlihat sama sekali di metrik lama, yang mencatat 11,4
+lawan 3,6 dan menyimpulkan sebaliknya. Selisih 3,9 poin itu kecil dan
+sampelnya satu himpunan, jadi jangan diklaim sebagai kemenangan; yang penting
+klaim lama "pipeline jauh lebih bersih dari student" tidak berdiri.
 
 **Student VLM 3B mengalahkan Baseline 12B** di `title_recall` (0,315 lawan
 0,267), `spec_halluc` (12,3 lawan 24,1), dan `desc_ungrounded` (8,7 lawan
@@ -237,19 +258,29 @@ pada 44% produk.
 | student 3B mengalahkan 12B | berdiri | `title_recall` 0,315 lawan 0,267 |
 | judul lebih patuh panjang platform | **gugur** | 39,7% lawan 55,4% — baseline menang |
 | "ambang 0,75 optimal" | **gugur** | pertukaran murni, tak ada yang mendominasi |
-| **deskripsi bebas kata asing** | **TAK SAH** | metriknya melewatkan 91% halusinasi (recall 9,1%) |
-| **spesifikasi hampir tak pernah dikarang** | **TAK SAH** | metriknya menangkap 0% (recall 0,0%) |
-| **halusinasi merek 4× lebih jarang** | **TAK SAH** | metriknya melewatkan 93% (recall 6,7%) |
+| lebih jarang mengarang dari baseline | berdiri, **tapi tipis** | `ungrounded_words%` 85,4 lawan 99,4 |
 | kecepatan student | **tak sah** | tumpukan penyajian berbeda |
+| ~~halusinasi merek 4× lebih jarang~~ | **gugur** | metriknya melewatkan 93% halusinasi |
+| ~~spesifikasi hampir tak pernah dikarang~~ | **gugur** | metriknya menangkap 0% |
+| ~~deskripsi bebas kata asing~~ | **gugur** | metriknya melewatkan 91% |
 
-Ketiga klaim halusinasi ditandai tak sah setelah penilaian manusia, bukan
-karena sistemnya buruk melainkan karena **metriknya tidak mengukur apa yang
-namanya janjikan**. Apakah pipeline benar-benar lebih jarang mengarang masih
-terbuka — belum ada ukuran sah yang menjawabnya.
+Ketiga klaim halusinasi lama gugur setelah penilaian manusia — bukan karena
+sistemnya buruk melainkan karena **metriknya tidak mengukur apa yang namanya
+janjikan**. Penggantinya, `ungrounded_words%`, masih menempatkan pipeline di
+atas baseline (85,4 lawan 99,4) tapi selisihnya jauh lebih kecil daripada
+"12× lebih bersih" yang dulu diklaim.
 
-Penilaian manusia pada 51 listing justru mencatat pipeline **lebih sering**
-mengarang judul daripada baseline (6/17 lawan 3/17), tapi sampelnya terlalu
-kecil untuk menyimpulkan. Lihat [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
+Dua hal yang harus ikut disebut kalau klaim ini dipakai:
+
+1. **Presisi metriknya 35%.** Angka mutlaknya tidak berarti "85% listing
+   berhalusinasi" — yang bermakna selisih antar sistem.
+2. **Student VLM sedikit lebih baik dari pipeline** (81,5). Klaim "pipeline
+   jauh lebih bersih dari student" tidak berdiri.
+
+Penilaian manusia pada 51 listing bahkan mencatat pipeline **lebih sering**
+mengarang judul daripada baseline (6/17 lawan 3/17) — berlawanan dengan metrik
+otomatis. Sampelnya terlalu kecil untuk menyimpulkan, tapi cukup untuk menahan
+klaim yang lebih berani. Lihat [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
 
 ## Berkas sumber
 
