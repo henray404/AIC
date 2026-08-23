@@ -1,7 +1,9 @@
-# LAPAKIN
+# PROPOSAL AI INNOVATION CHALLENGE 2026
+
+## LAPAKIN: Sistem Rekomendasi Listing dan Harga Jual untuk UMKM E-Commerce Berbasis Vision-Language Model, Pencarian TF-IDF, dan Penetapan Harga Market-First
 
 **Nama Kelompok:** `[NAMA TIM]`
-**Nama Inovasi:** LAPAKIN — Auto-Listing dan Rekomendasi Harga Jual untuk UMKM E-Commerce
+**Nama Inovasi:** LAPAKIN
 **Kompetisi:** AI Innovation Challenge, COMPFEST 18 (2026)
 **Tema:** AI for the Backbone of the Economy
 **Area:** Smart Commerce (Toko & Pasar)
@@ -12,64 +14,74 @@ LAPAKIN menerima satu foto produk dan satu nilai Harga Pokok Penjualan, lalu men
 
 ## DAFTAR ISI
 
-1. Latar Belakang
-2. Tujuan dan Manfaat Pengembangan
-3. Metodologi
-   3.1 Alur Memperoleh Dataset
-   3.2 Alur Pengembangan Model per Fitur
-   3.3 Alur Integrasi Model ke Environment Kode
-4. Metode Lain yang Mendasari Pengambilan Keputusan
-5. Batasan dan Keterbatasan
-6. Kesimpulan
+**BAB I PENDAHULUAN**
+1.1 Latar Belakang
+1.2 Rumusan Masalah
+1.3 Tujuan Pengembangan
+1.4 Manfaat Pengembangan
+1.5 Batasan Sistem
 
-Daftar Pustaka · Lampiran
+**BAB II TINJAUAN PUSTAKA**
+2.1 Digitalisasi UMKM dan Hambatan Onboarding di Marketplace
+2.2 Vision-Language Model dan Large Language Model Open-Weights
+2.3 Halusinasi pada Vision-Language Model dan Strategi Mitigasinya
+2.4 Temu Kembali Informasi TF-IDF dan Retrieval-Augmented Generation
+2.5 Cost-Plus Pricing, Market-Based Pricing, dan Koridor Harga
+2.6 Posisi LAPAKIN terhadap Penelitian Terdahulu
+
+**BAB III METODOLOGI**
+3.1 Arsitektur Sistem LAPAKIN
+3.2 Alur Memperoleh Dataset
+3.3 Alur Pengembangan Model per Fitur
+3.4 Alur Integrasi Model ke Environment Kode
+3.5 Metode Lain yang Mendasari Pengambilan Keputusan
+3.6 Keterbatasan Hasil
+
+**BAB IV KESIMPULAN DAN SARAN**
+4.1 Kesimpulan
+4.2 Saran
+
+**DAFTAR PUSTAKA**
+
+**LAMPIRAN**
 
 ---
 
-# 1. LATAR BELAKANG
+# BAB I PENDAHULUAN
+
+## 1.1 Latar Belakang
 
 Usaha Mikro, Kecil, dan Menengah menopang sebagian besar perekonomian Indonesia. Kementerian Koordinator Bidang Perekonomian mencatat 64,2 juta pelaku UMKM yang menyumbang 61,07% Produk Domestik Bruto dan menyerap sekitar 97% tenaga kerja nasional [1]. Badan Pusat Statistik mencatat 3,82 juta usaha e-commerce di 38 provinsi per akhir 2023, dengan mayoritas pelaku berasal dari kelompok usaha mikro [2].
 
-Angka itu menyembunyikan satu masalah operasional pada titik terakhir rantai nilai, yaitu saat barang berpindah ke tangan konsumen. Seorang penjual yang baru membuka lapak menghadapi formulir kosong: kolom judul, kolom deskripsi, pilihan kategori, dan kolom harga. Keempatnya menentukan apakah produk muncul di hasil pencarian dan apakah pembeli menekan tombol beli. Penjual pemula mengisinya dengan menebak.
+Angka itu menyembunyikan satu masalah operasional pada titik terakhir rantai nilai, yaitu saat barang berpindah ke tangan konsumen — area Smart Commerce pada tema kompetisi ini. Seorang penjual yang baru membuka lapak menghadapi formulir kosong: kolom judul, kolom deskripsi, pilihan kategori, dan kolom harga. Keempatnya menentukan apakah produk muncul di hasil pencarian dan apakah pembeli menekan tombol beli. Penjual pemula mengisinya dengan menebak.
 
 Kolom harga paling mahal kesalahannya. Penjual mengetahui modalnya, misalnya Rp25.000 per bungkus keripik, tetapi tidak mengetahui berapa yang dipotong marketplace. Tokopedia memungut komisi 3% sampai 8,5% bergantung kategori ditambah biaya pemrosesan Rp1.250 per pesanan. Shopee memungut biaya administrasi 4,25% sampai 12% ditambah program Gratis Ongkir XTRA 4% sampai 9%. Blibli memungut 4,25% sampai 10%. Di atas itu berlaku PPh Final UMKM 0,5% dari peredaran bruto, meskipun Peraturan Pemerintah Nomor 20 Tahun 2026 membebaskan omzet Rp500 juta pertama dalam satu tahun pajak bagi Wajib Pajak Orang Pribadi [3]. Penjual yang menetapkan harga dari modal ditambah persentase untung sering menemukan marginnya habis setelah seluruh potongan itu bekerja.
 
 Kesalahan berjalan ke dua arah. Harga terlalu rendah membuat penjual menanggung rugi pada setiap transaksi tanpa menyadarinya. Harga terlalu tinggi membuat produk tidak pernah terjual. Literatur penetapan harga pada UKM menunjuk akar persoalannya: metode *cost-plus* menetapkan harga dari biaya produksi tanpa memperhitungkan nilai yang bersedia dibayar pembeli, sehingga berisiko menghasilkan harga di atas atau di bawah pasar [4].
 
-## 1.1 Mengapa sekarang
+Kecerdasan buatan menawarkan jalan keluar untuk kolom judul dan deskripsi. Model *vision-language* *open-weights* berukuran kecil kini berjalan pada perangkat konsumen dan mampu membaca isi sebuah foto produk [5]. Model bahasa berukuran 7 miliar parameter mampu menyusun kalimat pemasaran berbahasa Indonesia [6]. Keduanya tersedia tanpa biaya API.
 
-Tiga perubahan membuat persoalan ini layak dikerjakan pada 2026.
+Kolom harga tidak dapat diselesaikan dengan cara yang sama. Harga jual yang benar bergantung pada Harga Pokok Penjualan milik penjual, tarif komisi platform tujuan, tarif pajak yang berlaku, dan sebaran harga pesaing. Tiga dari empat komponen itu berupa aritmetika bisnis yang eksak, bukan pola yang perlu dipelajari dari data. Model *deep learning* yang dilatih memprediksi harga dari foto hanya akan menghafal harga pasar, dan penjual tidak dapat memeriksa dari mana angka itu datang.
 
-**Aturan biaya berubah dalam satu tahun terakhir.** Peraturan Pemerintah Nomor 20 Tahun 2026 mempertahankan tarif PPh Final 0,5% dan membebaskan omzet Rp500 juta pertama [3]. Tokopedia menerapkan komisi dinamis per 18 Mei 2026 dan menurunkan batas atas biaya menjadi Rp80.000 per item pada Juli 2026, sementara Shopee memperbarui biaya administrasi per 2 Mei 2026. Penjual yang menghitung margin memakai angka tahun sebelumnya akan salah.
+Sistem yang diusulkan dalam proposal ini, selanjutnya disebut LAPAKIN, memisahkan dua persoalan tersebut. Bagian yang menuntut persepsi diserahkan kepada model AI. Bagian yang menuntut kepastian aritmetika diserahkan kepada mesin hitung deterministik yang menyajikan rincian setiap komponen biaya. Katalog 28.443 produk marketplace berperan sebagai rujukan pasar pada saat sistem bekerja, bukan sebagai data latih yang dilebur menjadi bobot model.
 
-**Perangkatnya baru terjangkau.** Model *vision-language* 4 miliar parameter yang berjalan pada satu kartu grafis 8 GB baru tersedia sebagai *open-weights* dalam dua tahun terakhir [5]. Sebelum itu, pipeline seperti LAPAKIN menuntut API berbayar per gambar — biaya yang tidak masuk akal bagi penjual dengan omzet di bawah Rp500 juta.
+**Mengapa sekarang.** Tiga perubahan membuat persoalan ini layak dikerjakan pada 2026. *Pertama,* aturan biaya berubah dalam satu tahun terakhir: PP Nomor 20 Tahun 2026 mempertahankan tarif PPh Final 0,5% dan membebaskan omzet Rp500 juta pertama [3]; Tokopedia menerapkan komisi dinamis per 18 Mei 2026 dan menurunkan batas atas biaya menjadi Rp80.000 per item pada Juli 2026; Shopee memperbarui biaya administrasi per 2 Mei 2026. Penjual yang menghitung margin memakai angka tahun sebelumnya akan salah. *Kedua,* perangkatnya baru terjangkau: model *vision-language* 4 miliar parameter yang berjalan pada satu kartu grafis 8 GB baru tersedia sebagai *open-weights* dalam dua tahun terakhir [5], sedangkan sebelumnya pipeline seperti LAPAKIN menuntut API berbayar per gambar. *Ketiga,* perubahan tarif menuntut arsitektur yang parameternya dapat diperbarui tanpa melatih ulang model apa pun.
 
-**Perubahan tarif menuntut arsitektur yang bisa diperbarui tanpa melatih ulang.** Memperbarui komisi platform pada LAPAKIN berarti mengubah satu berkas konfigurasi, bukan menjalankan ulang pelatihan.
+## 1.2 Rumusan Masalah
 
-## 1.2 Celah terhadap pekerjaan yang sudah ada
+1. Bagaimana menghasilkan judul, deskripsi, dan kategori produk yang sesuai gaya masing-masing marketplace hanya dari satu foto produk, tanpa model menyebut merek, ukuran, atau spesifikasi yang tidak terbaca pada foto tersebut?
+2. Bagaimana memanfaatkan katalog produk marketplace sebagai rujukan saat inferensi melalui temu kembali informasi, sehingga sistem memperoleh kosakata, kategori, dan sebaran harga produk sejenis tanpa melatih ulang model?
+3. Bagaimana merancang mesin penetapan harga yang menggabungkan Harga Pokok Penjualan penjual, komisi platform, biaya pemrosesan, dan pajak UMKM dengan sebaran harga pasar, serta menghasilkan rincian yang dapat diperiksa penjual?
+4. Bagaimana sistem memperlakukan kasus modal penjual terlalu tinggi untuk bersaing, yaitu ketika titik impas berada di atas kuartil atas harga pasar?
 
-| Sudut | Yang sudah ada | Yang belum dijawab |
-|---|---|---|
-| Digitalisasi UMKM | Kajian berhenti pada tingkat kebijakan dan literasi: berapa UMKM yang terhubung platform, program apa yang mempercepat | Tidak ada alat yang bekerja pada satu produk milik satu penjual, pada menit pertama ia mengisi formulir |
-| VLM/LLM *open-weights* | Laporan teknis Gemma 3 [5] dan Qwen2.5 [6] melaporkan kinerja pada tolok ukur umum | Tidak menjawab apakah model 4B dan 7B cukup untuk menulis listing marketplace berbahasa Indonesia yang patuh gaya tiap platform |
-| Halusinasi VLM | Survei Liu dkk. [7] meninjau mitigasi yang menyasar data pelatihan dan komponen model | Seluruhnya bekerja *di dalam* model, menuntut akses bobot dan komputasi besar |
-| RAG untuk e-commerce | Zhang dkk. [10] mengambil contoh dwibahasa dari katalog untuk *few-shot* penerjemahan judul, chrF naik hingga 15,3% | Menerjemahkan judul yang **sudah ada**; tidak tersedia teks sumber bila judul harus disusun dari foto |
-| Koridor harga UKM | Stromeyer dan Kurz [4] menetapkan batas bawah dari biaya produksi dan batas atas dari survei persepsi pelanggan | Menargetkan UKM barang modal: transaksi sedikit bernilai besar. UMKM marketplace sebaliknya, dan persepsi pelanggan tidak dapat disurvei per produk |
-
-LAPAKIN mengisi celah tersebut dengan tiga keputusan: kueri temu kembali dibangkitkan lebih dulu oleh tahap penglihatan sehingga judul dapat disusun tanpa teks sumber; halusinasi ditekan melalui verifikasi *pasca-generasi* terhadap katalog dengan biaya komputasi mendekati nol; dan koridor harga memakai titik impas setelah komisi dan pajak sebagai batas bawah, serta persentil harga produk sejenis pada katalog sebagai batas atas.
-
----
-
-# 2. TUJUAN DAN MANFAAT PENGEMBANGAN
-
-## 2.1 Tujuan
+## 1.3 Tujuan Pengembangan
 
 1. Membangun pipeline *auto-listing* dua tahap yang memakai `gemma3:4b` untuk ekstraksi fakta visual dan `qwen2.5:7b` untuk penyusunan teks, dilengkapi penjaga pasca-generasi yang menolak merek dan angka tanpa dasar pada foto.
 2. Membangun indeks TF-IDF atas 28.443 produk marketplace yang menghasilkan produk pembanding, kosakata khas platform, dan sebaran harga kategori pada saat inferensi.
 3. Membangun mesin penetapan harga *Market-First* yang menghitung titik impas dari HPP, komisi platform, biaya pemrosesan, dan PPh Final, lalu menempatkannya terhadap persentil harga pasar untuk menghasilkan harga rekomendasi beserta rinciannya.
 4. Mengukur setiap komponen melalui ablasi terkendali, dan melaporkan komponen yang tidak memberi perbaikan terukur beserta komponen yang memberi.
 
-## 2.2 Manfaat
+## 1.4 Manfaat Pengembangan
 
 | Penerima | Manfaat |
 |---|---|
@@ -78,48 +90,80 @@ LAPAKIN mengisi celah tersebut dengan tiga keputusan: kueri temu kembali dibangk
 | Peneliti | Studi kasus terukur tentang pemisahan tugas persepsi dan tugas aritmetika, termasuk ablasi yang menunjukkan komponen mana yang benar-benar menyumbang perbaikan |
 | Pengembang sistem serupa | Kamus merek dan profil gaya platform diturunkan dari katalog secara otomatis, sehingga metode yang sama dapat dipindahkan ke katalog lain tanpa anotasi manual |
 
+## 1.5 Batasan Sistem
+
+1. **Cakupan keluaran.** LAPAKIN menghasilkan usulan judul, deskripsi, kategori, dan rentang harga. Sistem tidak menerbitkan listing ke marketplace dan tidak terhubung ke API penjual mana pun. Keputusan akhir berada pada penjual.
+2. **Masukan.** Satu foto produk dan satu nilai HPP per produk. Sistem tidak menerima video, tidak membaca dokumen faktur, dan tidak menghitung HPP dari komponen bahan baku.
+3. **Platform tujuan.** Tokopedia, Shopee, dan Blibli. Tarif ketiganya tercatat pada berkas konfigurasi beserta tanggal berlakunya.
+4. **Sifat rujukan harga.** Sebaran harga berasal dari 28.443 produk yang dikumpulkan pada Agustus 2026. Sistem tidak memantau harga secara waktu nyata dan tidak mendeteksi perubahan harga pesaing setelah tanggal pengumpulan.
+5. **Label kategori.** Kolom `kategori_umkm` pada dataset merupakan label lemah: 37,8% baris jatuh ke kelas `lainnya` dan 55,2% dipetakan melalui pencocokan kata kunci judul. Seluruh sebaran harga per kategori mewarisi keterbatasan ini.
+6. **Skala evaluasi.** Ablasi komponen dijalankan pada 10 produk dengan 30 listing per konfigurasi, dan perbandingan model visual pada 100 gambar. Angka yang dilaporkan berlaku pada skala tersebut.
+7. **Metrik otomatis.** Metrik halusinasi mengukur konsistensi antara keluaran tahap penulisan dan keluaran tahap penglihatan. Metrik ini tidak memeriksa apakah tahap penglihatan membaca foto dengan benar.
+8. **Status data.** Dataset berasal dari pengumpulan otomatis untuk riset non-komersial dan tidak diredistribusikan. Setiap baris menyimpan URL sumbernya.
+
 ---
 
-# 3. METODOLOGI
+# BAB II TINJAUAN PUSTAKA
 
-## 3.1 Alur Memperoleh Dataset
+## 2.1 Digitalisasi UMKM dan Hambatan Onboarding di Marketplace
 
-### 3.1.1 Sumber dan penggabungan
+UMKM Indonesia berjumlah 64,2 juta dengan kontribusi 61,07% terhadap PDB dan penyerapan 97% tenaga kerja [1]. Survei e-commerce Badan Pusat Statistik mencatat 3,82 juta usaha e-commerce per 31 Desember 2023, dengan dominasi kelompok usaha mikro pada sektor perdagangan dan industri pengolahan [2].
 
-Katalog rujukan menggabungkan tiga sumber: 8.800 produk Blibli, 18.443 produk Tokopedia, dan 1.200 produk dari dataset Tokopedia 2025 — seluruhnya **28.443 baris dengan 25 kolom**. Hasil penggabungan diverifikasi baris demi baris terhadap ekspor sumbernya, dengan hasil nol baris hilang dan nol perubahan pada kolom judul, harga, deskripsi, kategori, maupun gambar.
+Kajian mengenai transformasi digital UMKM umumnya berhenti pada tingkat kebijakan dan literasi: berapa banyak UMKM yang sudah terhubung platform digital, dan program apa yang mempercepatnya. Pertanyaan operasional yang dihadapi penjual pada menit pertama, yaitu bagaimana mengisi kolom judul dan menentukan angka pada kolom harga, jarang diperlakukan sebagai persoalan teknis yang dapat diotomatisasi.
 
-Dari katalog itu diturunkan **27.997 pasangan latih** gambar → judul bersih melalui `scripts/build_train_pairs.py`. Targetnya judul yang sudah dibersihkan, bukan deskripsi: judul memuat jenis produk, merek, varian, dan ukuran — hampir semuanya terlihat pada foto, sedangkan deskripsi penuh spesifikasi yang tidak terlihat seperti berat kirim, garansi, dan isi karton.
+**Celah yang tersisa.** Literatur digitalisasi UMKM memetakan hambatan pada tingkat agregat, tetapi tidak menyediakan alat yang bekerja pada satu produk milik satu penjual. LAPAKIN mengisi ruang itu.
 
-### 3.1.2 Prosedur pengambilan
+## 2.2 Vision-Language Model dan Large Language Model Open-Weights
 
-Pengumpulan Tokopedia berjalan dua tahap, dan urutannya wajib. Tahap pertama mengambil daftar produk dari hasil pencarian. Tahap kedua mengambil deskripsi lengkap dan galeri gambar dari halaman produk. Alasannya teknis: URL *thumbnail* dari hasil pencarian memakai tanda tangan yang kedaluwarsa dalam hitungan jam, sedangkan URL galeri dari halaman produk tidak bertanda tangan.
+Gemma 3 merupakan keluarga model *open-weights* berukuran 1 sampai 27 miliar parameter yang menambahkan kemampuan pemahaman visual, cakupan bahasa yang lebih luas, dan konteks minimal 128 ribu token. Arsitekturnya menaikkan rasio lapisan atensi lokal terhadap global untuk menekan konsumsi memori KV-*cache* pada konteks panjang [5]. Sifat itu penting bagi LAPAKIN karena pipeline dijalankan pada satu kartu grafis 8 GB.
 
-Setiap *response* mentah disimpan sebelum diparse. Konsekuensinya, perbaikan parser tidak pernah menuntut pengumpulan ulang — cukup `python main.py reparse`.
+Qwen2.5 merupakan seri model bahasa yang dilatih pada 18 triliun token dengan penyempurnaan pasca-pelatihan berupa *supervised finetuning* lebih dari satu juta sampel dan pembelajaran penguatan bertahap, yang menaikkan kemampuan pembangkitan teks panjang dan kepatuhan pada instruksi [6]. LAPAKIN memakai varian 7 miliar parameter untuk menyusun judul dan deskripsi.
 
-### 3.1.3 Batas dan etika pengambilan
+**Celah yang tersisa.** Kedua laporan teknis melaporkan kinerja pada tolok ukur umum. Keduanya tidak menjawab apakah model berukuran 4B dan 7B cukup untuk menulis listing marketplace berbahasa Indonesia yang patuh pada gaya tiap platform. Subbab 3.3 menjawabnya secara empiris.
 
-Pengumpulan dijalankan dengan *concurrency* 1, jeda acak 2 sampai 5 detik antar-*request*, dan pemutus arus yang menghentikan proses setelah sepuluh kegagalan beruntun. Sistem tidak memuat pemecah CAPTCHA. Dataset tidak diredistribusikan dan setiap baris menyimpan URL sumbernya.
+## 2.3 Halusinasi pada Vision-Language Model dan Strategi Mitigasinya
 
-### 3.1.4 Karakter dan cacat dataset
+Survei Liu dkk. mendefinisikan halusinasi pada *Large Vision-Language Model* sebagai ketidakselarasan antara isi visual faktual dan teks yang dihasilkan, lalu meninjau metode mitigasi yang menyasar data pelatihan, komponen model, dan metodologi evaluasi [7].
 
-Tahap pertama pengumpulan Tokopedia menghasilkan 18.997 produk unik dari 221 *request* dalam sekitar 21 menit tanpa satu pun galat, berasal dari 8.695 toko berbeda dengan toko terbesar menyumbang 0,61% dataset. Tahap kedua pada sampel 602 produk menghasilkan deskripsi teks untuk 96,7% produk dengan median 988 karakter, pada laju sekitar 3,5 detik per produk. Dari 28.443 baris gabungan, 28.093 (98,8%) memiliki minimal satu berkas gambar lokal yang sudah diverifikasi keberadaannya.
+Bagi LAPAKIN, halusinasi bukan persoalan akademik. Judul yang menyebut merek milik produk lain berpotensi melanggar hak merek. Judul yang menyebut "500ml" untuk botol 200 ml membuat penjual berhadapan dengan tuntutan pembeli. Kesalahan jenis ini harus mencapai nol, bukan sekadar berkurang.
 
-Enam temuan berikut muncul setelah data terkumpul, dan seluruhnya membatasi cara dataset boleh dipakai.
+**Celah yang tersisa.** Metode mitigasi pada survei tersebut bekerja di dalam model, melalui pengubahan strategi *decoding* atau penyetelan komponen, sehingga menuntut akses dan sumber daya komputasi. LAPAKIN menempuh jalur lain: memverifikasi keluaran terhadap katalog dan terhadap keluaran tahap penglihatan setelah teks selesai ditulis, dengan biaya komputasi yang mendekati nol.
 
-| Temuan | Angka | Konsekuensi |
+## 2.4 Temu Kembali Informasi TF-IDF dan Retrieval-Augmented Generation
+
+Spärck Jones mengusulkan pembobotan istilah menurut frekuensi kemunculannya pada koleksi, sehingga kecocokan pada istilah yang jarang bernilai lebih tinggi daripada kecocokan pada istilah yang sering muncul. Ukuran tersebut kemudian dikenal sebagai *inverse document frequency* [8].
+
+Lewis dkk. memperkenalkan *Retrieval-Augmented Generation*, yaitu penggabungan memori parametrik model terlatih dengan memori non-parametrik berupa indeks yang dapat ditelusuri. Model yang memakai pendekatan ini menghasilkan keluaran yang lebih spesifik dan lebih faktual dibanding model yang hanya mengandalkan parameter [9].
+
+Penerapannya pada domain e-commerce dilaporkan Zhang, Nakatani, dan Walter. Mereka mengambil contoh dwibahasa yang mirip dari katalog produk lalu memakainya sebagai *few-shot prompt* untuk penerjemahan judul produk, dan mencatat kenaikan skor chrF hingga 15,3% pada pasangan bahasa yang penguasaan modelnya terbatas [10].
+
+**Celah yang tersisa.** Pekerjaan Zhang dkk. menerjemahkan judul yang sudah ada. LAPAKIN menyusun judul dari foto, sehingga tidak tersedia teks sumber untuk dicocokkan. Kueri temu kembali pada LAPAKIN harus dibangkitkan terlebih dahulu oleh tahap penglihatan, dan mutu temu kembali bergantung pada mutu kueri tersebut.
+
+## 2.5 Cost-Plus Pricing, Market-Based Pricing, dan Koridor Harga
+
+Stromeyer dan Kurz meneliti penetapan harga pada UKM sektor barang modal dan mengusulkan kerangka *Weighted Dynamic Corridor Price Optimisation*. Kerangka itu menetapkan harga minimum dari biaya produksi dan tujuan strategis, sedangkan harga maksimum mencerminkan nilai yang dipersepsikan pelanggan, ambang harga psikologis, dan dinamika pasar. Penulisnya menyatakan pendekatan koridor menekan risiko harga terlalu tinggi maupun terlalu rendah dibanding penerapan *cost-plus* murni [4].
+
+Kritik terhadap *cost-plus pricing* berpusat pada satu titik: metode itu menetapkan harga dari biaya produksi tanpa memperhitungkan nilai yang bersedia dibayar pelanggan, sehingga harga dapat menyimpang jauh dari pasar [4].
+
+**Celah yang tersisa.** Kerangka koridor Stromeyer dan Kurz menargetkan UKM barang modal, yang jumlah transaksinya sedikit dengan nilai per transaksi besar, dan batas atas koridornya diperoleh dari survei persepsi pelanggan. UMKM marketplace berada pada kondisi sebaliknya: transaksi banyak bernilai kecil, dan persepsi pelanggan tidak dapat disurvei per produk. LAPAKIN mengambil struktur koridornya, lalu mengganti sumber batas atas dengan persentil harga produk sejenis pada katalog, dan mengganti batas bawah dengan titik impas yang sudah memperhitungkan komisi platform dan pajak.
+
+## 2.6 Posisi LAPAKIN terhadap Penelitian Terdahulu
+
+| Aspek | Penelitian terdahulu | Posisi LAPAKIN |
 |---|---|---|
-| Gambar Tokopedia 2025 hilang | 9.614 berkas; 311 dari 1.200 produk tanpa gambar | Sumber tidak menyimpan URL CDN, tidak dapat diunduh ulang |
-| Label kategori lemah | 37,8% `lainnya`; 55,2% hasil pencocokan kata kunci | Seluruh sebaran harga per kategori mewarisi kelemahan ini |
-| Nomor telepon pada deskripsi | 4,3% baris | Data pribadi, wajib dibuang sebelum pemakaian apa pun |
-| Deskripsi bukan teks jualan | 33,6% memuat ALL CAPS panjang; 20,9% membahas ongkir dan pengemasan | Perlu penyaringan sebelum dipakai sebagai contoh gaya |
-| Duplikasi | 2.228 baris berjudul kembar; 4.280 baris berdeskripsi identik | Pemisahan *train* dan *test* wajib per grup, bukan acak |
-| Ketimpangan sumber dan kategori | Tokopedia 65% baris; `fashion_perawatan` 7.566 lawan `minuman_herbal` 1.796 | Rujukan harga lebih kuat pada kategori besar |
+| Sumber contoh *few-shot* | Katalog dwibahasa untuk penerjemahan judul [10] | Katalog satu bahasa untuk penyusunan judul dari foto |
+| Mitigasi halusinasi | Intervensi di dalam model [7] | Verifikasi pasca-generasi terhadap katalog dan keluaran tahap penglihatan |
+| Batas bawah harga | Biaya produksi dan tujuan strategis [4] | Titik impas setelah komisi platform, biaya pemrosesan, dan PPh Final |
+| Batas atas harga | Survei persepsi pelanggan [4] | Persentil harga produk sejenis pada katalog 28.443 produk |
+| Peran dataset | Data latih | Rujukan saat inferensi, tanpa pelatihan ulang |
 
-Ditemukan pula 632 harga yang tidak masuk akal (3,3%), misalnya kaos seharga Rp1.999.960.000. *Response* mentahnya memang memuat angka tersebut, sehingga ini bukan kegagalan parser melainkan kesalahan ketik penjual. Notebook `03_eda_dataset.ipynb` mendeteksinya per kategori memakai *Median Absolute Deviation* pada logaritma harga.
+---
 
-## 3.2 Alur Pengembangan Model per Fitur
+# BAB III METODOLOGI
 
-Sistem terdiri atas empat fitur. Ketiganya yang pertama memakai model AI; yang keempat sengaja tidak.
+## 3.1 Arsitektur Sistem LAPAKIN
+
+Sistem terdiri atas empat fitur. Tiga yang pertama memakai model AI; yang keempat sengaja tidak.
 
 ```
 Foto produk
@@ -139,30 +183,75 @@ Foto produk
           keluaran: titik impas, zona, harga rekomendasi, rincian
 ```
 
-### 3.2.1 Fitur 1 — Ekstraksi fakta visual
+**Gambar 3.1** Alur empat fitur LAPAKIN
+
+Sebagaimana ditunjukkan pada Gambar 3.1, Fitur 4 tidak memanggil model apa pun. Seluruh keluarannya berupa hasil aritmetika atas parameter yang tercatat pada berkas konfigurasi. Alasan pemilihan pendekatan ini dibahas pada Subbab 3.5.3.
+
+## 3.2 Alur Memperoleh Dataset
+
+### 3.2.1 Sumber dan penggabungan
+
+Katalog rujukan menggabungkan tiga sumber: 8.800 produk Blibli, 18.443 produk Tokopedia, dan 1.200 produk dari dataset Tokopedia 2025 — seluruhnya **28.443 baris dengan 25 kolom**. Hasil penggabungan diverifikasi baris demi baris terhadap ekspor sumbernya, dengan hasil nol baris hilang dan nol perubahan pada kolom judul, harga, deskripsi, kategori, maupun gambar.
+
+Dari katalog itu diturunkan **27.997 pasangan latih** gambar → judul bersih melalui `scripts/build_train_pairs.py`. Targetnya judul yang sudah dibersihkan, bukan deskripsi: judul memuat jenis produk, merek, varian, dan ukuran — hampir semuanya terlihat pada foto, sedangkan deskripsi penuh spesifikasi yang tidak terlihat seperti berat kirim, garansi, dan isi karton.
+
+### 3.2.2 Prosedur pengambilan
+
+Pengumpulan Tokopedia berjalan dua tahap, dan urutannya wajib. Tahap pertama mengambil daftar produk dari hasil pencarian. Tahap kedua mengambil deskripsi lengkap dan galeri gambar dari halaman produk. Alasannya teknis: URL *thumbnail* dari hasil pencarian memakai tanda tangan yang kedaluwarsa dalam hitungan jam, sedangkan URL galeri dari halaman produk tidak bertanda tangan.
+
+Setiap *response* mentah disimpan sebelum diparse. Konsekuensinya, perbaikan parser tidak pernah menuntut pengumpulan ulang — cukup `python main.py reparse`.
+
+### 3.2.3 Batas dan etika pengambilan
+
+Pengumpulan dijalankan dengan *concurrency* 1, jeda acak 2 sampai 5 detik antar-*request*, dan pemutus arus yang menghentikan proses setelah sepuluh kegagalan beruntun. Sistem tidak memuat pemecah CAPTCHA. Dataset tidak diredistribusikan dan setiap baris menyimpan URL sumbernya.
+
+### 3.2.4 Karakter dan cacat dataset
+
+Tahap pertama pengumpulan Tokopedia menghasilkan 18.997 produk unik dari 221 *request* dalam sekitar 21 menit tanpa satu pun galat, berasal dari 8.695 toko berbeda dengan toko terbesar menyumbang 0,61% dataset. Tahap kedua pada sampel 602 produk menghasilkan deskripsi teks untuk 96,7% produk dengan median 988 karakter, pada laju sekitar 3,5 detik per produk. Dari 28.443 baris gabungan, 28.093 (98,8%) memiliki minimal satu berkas gambar lokal yang sudah diverifikasi keberadaannya.
+
+Enam temuan berikut muncul setelah data terkumpul, dan seluruhnya membatasi cara dataset boleh dipakai.
+
+**Tabel 3.1** Temuan yang membatasi pemakaian dataset
+
+| Temuan | Angka | Konsekuensi |
+|---|---|---|
+| Gambar Tokopedia 2025 hilang | 9.614 berkas; 311 dari 1.200 produk tanpa gambar | Sumber tidak menyimpan URL CDN, tidak dapat diunduh ulang |
+| Label kategori lemah | 37,8% `lainnya`; 55,2% hasil pencocokan kata kunci | Seluruh sebaran harga per kategori mewarisi kelemahan ini |
+| Nomor telepon pada deskripsi | 4,3% baris | Data pribadi, wajib dibuang sebelum pemakaian apa pun |
+| Deskripsi bukan teks jualan | 33,6% memuat ALL CAPS panjang; 20,9% membahas ongkir dan pengemasan | Perlu penyaringan sebelum dipakai sebagai contoh gaya |
+| Duplikasi | 2.228 baris berjudul kembar; 4.280 baris berdeskripsi identik | Pemisahan *train* dan *test* wajib per grup, bukan acak |
+| Ketimpangan sumber dan kategori | Tokopedia 65% baris; `fashion_perawatan` 7.566 lawan `minuman_herbal` 1.796 | Rujukan harga lebih kuat pada kategori besar |
+
+Ditemukan pula 632 harga yang tidak masuk akal (3,3%), misalnya kaos seharga Rp1.999.960.000. *Response* mentahnya memang memuat angka tersebut, sehingga ini bukan kegagalan parser melainkan kesalahan ketik penjual. Notebook `03_eda_dataset.ipynb` mendeteksinya per kategori memakai *Median Absolute Deviation* pada logaritma harga.
+
+## 3.3 Alur Pengembangan Model per Fitur
+
+### 3.3.1 Fitur 1 — Ekstraksi fakta visual
 
 **Pertanyaan yang dijawab lebih dulu.** Sebelum memilih model, `scripts/probe_vlm_baseline.py` dijalankan untuk menguji apakah model dasar sudah mampu menyebut bendanya dengan benar. Dua model dibandingkan pada 100 gambar yang sama.
+
+**Tabel 3.2** Perbandingan model visual, n=100 gambar
 
 | Model | Skor inti | Keluaran bocor |
 |---|---|---|
 | `gemma3:4b` | **0,483** | **0** |
 | `qwen3-vl:4b` | 0,371 | 11 |
 
-`gemma3:4b` unggul pada kedua ukuran dan dipilih untuk tahap penglihatan. Uji lanjutan menaikkan ukuran model dari 4B ke 7B pada 100 gambar yang sama menghasilkan skor inti 0,483 lawan 0,468 — kenaikan ukuran model tidak memperbaiki cacat halusinasi merek sama sekali. Temuan ini yang mengarahkan pekerjaan berikutnya ke verifikasi pasca-generasi, bukan ke model yang lebih besar.
+Sebagaimana ditunjukkan pada Tabel 3.2, `gemma3:4b` unggul pada kedua ukuran dan dipilih untuk tahap penglihatan. Uji lanjutan menaikkan ukuran model dari 4B ke 7B pada 100 gambar yang sama menghasilkan skor inti 0,483 lawan 0,468 — kenaikan ukuran model tidak memperbaiki cacat halusinasi merek sama sekali. Temuan ini yang mengarahkan pekerjaan berikutnya ke verifikasi pasca-generasi, bukan ke model yang lebih besar.
 
 **Keluaran fitur.** Daftar fakta yang terbaca pada foto: jenis barang, warna, bentuk kemasan, dan teks yang benar-benar tercetak. Daftar ini berperan ganda — sebagai bahan penulisan dan sebagai *bukti* yang dipakai penjaga pada Fitur 3.
 
-### 3.2.2 Fitur 2 — Temu kembali katalog
+### 3.3.2 Fitur 2 — Temu kembali katalog
 
 Indeks TF-IDF dibangun di atas judul bersih 28.443 produk. Pembobotan mengikuti prinsip *inverse document frequency* [8]: kecocokan pada istilah yang jarang bernilai lebih tinggi daripada kecocokan pada istilah yang sering muncul.
 
 Kueri disusun dari keluaran Fitur 1. Keluarannya tiga hal: produk pembanding, kosakata khas platform tujuan, dan sebaran harga kategori berupa persentil 25, median, dan persentil 75.
 
-Peran katalog di sini adalah memori non-parametrik yang dapat ditelusuri, seperti pada Retrieval-Augmented Generation [9]: katalog dipakai **saat inferensi**, sehingga penambahan atau pembaruan produk tidak menuntut pelatihan ulang.
+Peran katalog di sini adalah memori non-parametrik yang dapat ditelusuri, seperti pada *Retrieval-Augmented Generation* [9]: katalog dipakai **saat inferensi**, sehingga penambahan atau pembaruan produk tidak menuntut pelatihan ulang.
 
 `scripts/build_platform_profiles.py` menurunkan profil gaya per platform langsung dari data: panjang judul lazim, pemakaian tanda garis miring, panjang deskripsi, sebaran harga per kategori, dan kosakata khas tiap platform.
 
-### 3.2.3 Fitur 3 — Penyusunan listing dan penjaga bukti
+### 3.3.3 Fitur 3 — Penyusunan listing dan penjaga bukti
 
 Tahap penulisan menerima fakta visual bersama dua contoh judul nyata dari platform tujuan untuk produk semirip mungkin, dengan angka pada contoh disamarkan agar tidak tersalin. Keluarannya kemudian diperiksa penjaga pasca-generasi, yang memperlakukan kata dan angka secara berbeda.
 
@@ -176,6 +265,8 @@ Aturan ini menutup celah yang ditemukan saat membaca keluaran. Kata "ZARA" sempa
 
 **Hasil ablasi.** Tujuh konfigurasi dijalankan pada 10 produk yang sama, 30 listing per konfigurasi, pada mesin dan model yang sama.
 
+**Tabel 3.3** Ablasi komponen pipeline listing, n=10 produk, 30 listing per konfigurasi
+
 | Konfigurasi | Harga meleset | Merek karangan (sempit) | Merek (lebar) | Panjang patuh | Inti | Detik |
 |---|---|---|---|---|---|---|
 | A semua perbaikan mati | 34,4% | 6,9% | 20,7% | 13,8% | 0,292 | 20,3 |
@@ -187,11 +278,13 @@ Aturan ini menutup celah yang ditemukan saat membaca keluaran. Kata "ZARA" sempa
 | G F ditambah penanganan frasa merek | 2,6% | 0,0% | 13,3% | 80,0% | 0,387 | 18,7 |
 | **I penjaga angka dan aturan bukti (final)** | **2,6%** | **0,0%** | 17,2% | 79,3% | **0,399** | **17,8** |
 
-Perbandingan D lawan F menunjukkan efek terbesar pada pekerjaan ini: halusinasi merek pada ukuran sempit turun dari **17,2% menjadi 0,0%**. Contoh yang tertangkap penjaga mencakup "Fantech" yang masuk ke judul keyboard karena merek itu ada pada kosakata khas platform, "Altraze" pada tas tanpa merek, dan "Longchamp" pada tas biasa.
+Perbandingan D lawan F pada Tabel 3.3 menunjukkan efek terbesar pada pekerjaan ini: halusinasi merek pada ukuran sempit turun dari **17,2% menjadi 0,0%**. Contoh yang tertangkap penjaga mencakup "Fantech" yang masuk ke judul keyboard karena merek itu ada pada kosakata khas platform, "Altraze" pada tas tanpa merek, dan "Longchamp" pada tas biasa.
 
 Penjaga merek memeriksa kata, sehingga angka lolos bebas. Model menuliskan "Shampoo 500ml", "Softergent 200g", dan "20 Sachet" untuk foto yang tidak memuat satu pun angka tersebut. Setelah aturan bukti foto diberlakukan pada konfigurasi I, spesifikasi karangan turun dari **10,0% menjadi 0,0%**.
 
 Perbandingan E lawan B menunjukkan kepatuhan panjang judul naik dari **20,7% menjadi 80,0%**.
+
+**Tabel 3.4** Panjang judul rata-rata (kata) terhadap rentang lazim tiap platform
 
 | Konfigurasi | Blibli | Tokopedia | Shopee |
 |---|---|---|---|
@@ -201,9 +294,7 @@ Perbandingan E lawan B menunjukkan kepatuhan panjang judul naik dari **20,7% men
 
 Tiga putaran perbaikan *prompt* sebelumnya gagal menggeser panjang judul sama sekali. Model 4B dan 7B mengabaikan instruksi panjang seberapa pun tegasnya. Yang berhasil justru mengerjakan penyesuaian panjang **di luar model**, dengan menambahkan kata kunci pendukung dari judul produk pembanding.
 
-### 3.2.4 Fitur 4 — Penetapan harga Market-First
-
-Fitur ini tidak memanggil model apa pun. Seluruh keluarannya hasil aritmetika atas parameter yang tercatat pada berkas konfigurasi. Alasan pemilihannya dibahas pada Subbab 4.3.
+### 3.3.4 Fitur 4 — Penetapan harga Market-First
 
 **Langkah 1.** Menentukan harga pasar dari median harga produk pembanding hasil Fitur 2, beserta persentil 25 dan 75.
 
@@ -215,7 +306,9 @@ Harga_BEP = HPP_per_unit / (1 − Total_Potongan)
 
 `Total_Potongan` menjumlahkan komisi platform, biaya Gratis Ongkir bila berlaku, biaya pemrosesan pesanan, dan PPh Final. Nilai per platform per kategori tercatat pada berkas konfigurasi beserta tanggal berlakunya (Lampiran 3).
 
-**Langkah 3.** Menempatkan titik impas terhadap persentil harga pasar:
+**Langkah 3.** Menempatkan titik impas terhadap persentil harga pasar.
+
+**Tabel 3.5** Zona keputusan harga
 
 | Zona | Syarat | Arti |
 |---|---|---|
@@ -226,7 +319,7 @@ Harga_BEP = HPP_per_unit / (1 − Total_Potongan)
 
 **Langkah 4.** Menentukan harga rekomendasi menurut zona. Zona BAGUS memakai median pasar. Zona WAJAR menjepit median pasar antara BEP dikali 1,20 dan P75. Zona KETAT menjepit BEP dikali 1,15 antara median dan P75. Zona BAHAYA menampilkan peringatan bahwa modal terlalu tinggi, menyertakan saran taktis, dan tetap menyajikan angka P75 dengan penjelasan risikonya.
 
-Perancangan zona BAHAYA menjawab kelemahan *cost-plus* yang dikritik pada literatur penetapan harga UKM [4]. Model versi pertama pada proyek ini mengalami cacat yang sama: ketika HPP ditambah margin menghasilkan Rp54.900 sementara P25 pasar berada di Rp35.000, model tetap merekomendasikan Rp54.900. Versi *Market-First* menolak menaikkan harga melampaui pasar dan memilih memperingatkan penjual.
+Perancangan zona BAHAYA menjawab kelemahan *cost-plus* yang dikritik pada Subbab 2.5. Model versi pertama pada proyek ini mengalami cacat yang sama: ketika HPP ditambah margin menghasilkan Rp54.900 sementara P25 pasar berada di Rp35.000, model tetap merekomendasikan Rp54.900. Versi *Market-First* menolak menaikkan harga melampaui pasar dan memilih memperingatkan penjual.
 
 **Hasil.** Proporsi harga meleset turun dari 34,4% pada konfigurasi A menjadi 2,6% pada seluruh konfigurasi lain; enam dari sembilan produk menghasilkan harga yang persis sama di semua konfigurasi. Penyebab perbaikan ini berbeda dari yang diperkirakan pada tahap perancangan. Masalah awalnya terletak pada satu kalimat *prompt* yang meminta model memakai rentang harga kategori sebagai dasar perkiraan; kategori `lainnya` membentang dari Rp21 ribu sampai Rp969 ribu, sehingga patokan tersebut tidak bermakna. Setelah kalimat itu diubah menjadi arahan yang mengutamakan harga produk pembanding, harga langsung mendarat pada angka katalog.
 
@@ -234,28 +327,32 @@ Penghitung harga deterministik versi awal yang ditambahkan sebagai komponen terp
 
 `scripts/pricing_engine.py` versi *Market-First* menggantikan penghitung awal tersebut dan kini terintegrasi ke pipeline melalui `--hpp`. **Efek integrasi ini terhadap kelima metrik listing belum diukur** — perintah ablasinya tercantum pada Lampiran 2 dan hasilnya akan menggantikan paragraf ini begitu tersedia.
 
-### 3.2.5 Status penyesuaian model
+### 3.3.5 Status penyesuaian model
 
 Ketentuan lomba mewajibkan model disesuaikan (*fine-tune*) menurut inovasi fitur tiap tim. Status faktual pekerjaan ini per penyusunan dokumen:
+
+**Tabel 3.6** Status penyesuaian model per komponen
 
 | Komponen | Status | Bukti di repo |
 |---|---|---|
 | Pasangan latih gambar → judul bersih | **Siap**, 27.997 pasangan | `scripts/build_train_pairs.py` → `train_pairs.parquet` |
 | Uji kebutuhan *fine-tune* pada tahap penglihatan | **Selesai** | `scripts/probe_vlm_baseline.py`, n=100 |
 | *Fine-tune* Fitur 1 dan Fitur 3 | **Belum dijalankan** | — |
-| *Fine-tune* Fitur 4 | **Tidak dilakukan, disengaja** | Alasan pada Subbab 4.3 |
+| *Fine-tune* Fitur 4 | **Tidak dilakukan, disengaja** | Alasan pada Subbab 3.5.3 |
 
 Fitur 4 tidak akan disesuaikan dalam bentuk apa pun, dan itu keputusan desain yang dipertahankan: harga jual ditentukan HPP penjual, tarif komisi, dan tarif pajak — tiga besaran eksak yang berubah lewat peraturan, bukan pola yang dapat dipelajari dari data. Fitur 1 dan Fitur 3 adalah tempat penyesuaian model relevan, dan pasangan latihnya sudah tersedia; yang belum ada adalah bobot hasil latih beserta angka pembandingnya terhadap keluaran *prompt-only*. Sesuai aturan penulisan proyek ini, klaim tidak dituliskan mendahului artefaknya.
 
-## 3.3 Alur Integrasi Model ke Environment Kode
+## 3.4 Alur Integrasi Model ke Environment Kode
 
-### 3.3.1 Pemisahan dua fase dan alasannya
+### 3.4.1 Pemisahan dua fase dan alasannya
 
 Pemisahan Fitur 1 dan Fitur 3 bukan pilihan gaya. Kartu grafis 8 GB tidak memuat `gemma3:4b` dan `qwen2.5:7b` sekaligus. Pipeline versi awal memanggil keduanya bergantian untuk setiap produk, sehingga Ollama menukar bobot model dua puluh kali dalam satu *run*: satu *run* 20 produk berjalan 25 menit dan baru menyelesaikan lima produk, setara sekitar **300 detik per produk**. Sebagian besar waktu terpakai untuk memuat bobot, bukan untuk inferensi.
 
-Pipeline diubah menjadi dua fase: seluruh panggilan penglihatan dijalankan lebih dulu, kemudian seluruh panggilan penulisan. Setiap model dimuat satu kali. Waktu turun menjadi **17,8 detik per produk** pada konfigurasi final. Perubahan inilah yang memungkinkan tujuh konfigurasi pada Subbab 3.2.3 diuji dalam satu malam.
+Pipeline diubah menjadi dua fase: seluruh panggilan penglihatan dijalankan lebih dulu, kemudian seluruh panggilan penulisan. Setiap model dimuat satu kali. Waktu turun menjadi **17,8 detik per produk** pada konfigurasi final. Perubahan inilah yang memungkinkan tujuh konfigurasi pada Subbab 3.3.3 diuji dalam satu malam.
 
-### 3.3.2 Batas modul
+### 3.4.2 Batas modul
+
+**Tabel 3.7** Pemisahan lapisan sistem
 
 | Lapisan | Isi | Berkas |
 |---|---|---|
@@ -267,25 +364,23 @@ Pipeline diubah menjadi dua fase: seluruh panggilan penglihatan dijalankan lebih
 
 Lapisan aritmetika harga tidak mengimpor apa pun dari lapisan inferensi AI. Konsekuensinya, `pricing_engine.py` dapat diuji tanpa Ollama hidup — `scripts/pricing_demo_offline.py` dan `tests/test_pricing.py` berjalan sepenuhnya luring.
 
-### 3.3.3 Antarmuka dan cara menjalankan
+### 3.4.3 Antarmuka dan cara menjalankan
 
 Ruang lingkup MVP mengikuti batasan lomba: antarmuka hanya memuat alur interaksi inti — pengguna mengunggah satu foto dan mengisi HPP, sistem menampilkan judul, deskripsi, kategori, dan rincian harga per platform. Tidak ada dasbor analitik, tidak ada otentikasi, tidak ada halaman riwayat. *Backend* hanya memproses interaksi sinkron; tidak ada *background job* maupun basis data terdistribusi.
 
 Parameter model bersifat statis saat demonstrasi berjalan. Panduan menjalankan sistem secara lokal berada pada `README.md`, dan seluruh layanan dibungkus `docker compose` sehingga penilai dapat menjalankannya tanpa menyiapkan lingkungan Python secara manual.
 
-### 3.3.4 Uji dan reproduksi
+### 3.4.4 Uji dan reproduksi
 
 Seluruh berkas uji dijalankan luring; `tests/conftest.py` memasang penjaga yang menggagalkan uji apa pun yang menyentuh jaringan. Setiap perbaikan pipeline memiliki sakelar mematikan sendiri — `--tanpa-harga-hitung`, `--tanpa-saring-merek`, `--tanpa-contoh-pola` — sehingga efek tiap komponen dapat dipisahkan dan diukur ulang. Perintah lengkapnya pada Lampiran 2.
 
----
+## 3.5 Metode Lain yang Mendasari Pengambilan Keputusan
 
-# 4. METODE LAIN YANG MENDASARI PENGAMBILAN KEPUTUSAN
-
-## 4.1 Ablasi terkendali sebagai syarat klaim
+### 3.5.1 Ablasi terkendali sebagai syarat klaim
 
 Aturan kerja proyek ini: klaim perbaikan hanya sah bila ada angka sebelum dan sesudah. Sepuluh produk yang sama (`--n 10 --seed 7`), tiga platform, 30 listing per konfigurasi, dijalankan berurutan pada mesin dan model yang sama. Benih tetap membuat potongan `--iris a:b` selalu memuat produk yang sama, sehingga satu konfigurasi dapat dikerjakan beberapa kali tanpa mengubah sampelnya.
 
-Lima metrik dicatat per konfigurasi:
+**Tabel 3.8** Definisi metrik evaluasi
 
 | Metrik | Definisi |
 |---|---|
@@ -299,15 +394,15 @@ Lima metrik dicatat per konfigurasi:
 
 Kejadian yang sama terjadi pada penjaga v1, yang membuang enam kata padahal hanya dua di antaranya benar-benar merek karangan; kata "Pesta", "Pelembut Pakaian", dan "Jogging" ikut terbuang, dan frasa "Merek Tidak Tertera" terpotong menjadi "Gaun Floral Merek Tidak". Versi kedua memakai tiga golongan kata: kata yang memiliki dasar selalu lolos, nama merek yang dikenal wajib memiliki dukungan, dan kata Indonesia lazim (muncul pada minimal 20 produk) dibiarkan. Hasil pada ukuran sempit sama bersihnya dengan kerusakan sampingan jauh lebih sedikit, dan skor inti justru naik menjadi 0,403.
 
-Ablasi yang memburuk tetap dilaporkan pada dokumen ini. Konfigurasi E memperlihatkan kepatuhan panjang jatuh ke 20,7% dan skor inti ke 0,278 — angka terburuk pada tabel — dan tetap dicantumkan karena justru itu yang membuktikan contoh pola bekerja.
+Ablasi yang memburuk tetap dilaporkan pada dokumen ini. Konfigurasi E memperlihatkan kepatuhan panjang jatuh ke 20,7% dan skor inti ke 0,278 — angka terburuk pada Tabel 3.3 — dan tetap dicantumkan karena justru itu yang membuktikan contoh pola bekerja.
 
-## 4.2 Verifikasi eksternal dipilih setelah model yang lebih besar gagal
+### 3.5.2 Verifikasi eksternal dipilih setelah model yang lebih besar gagal
 
 Tiga temuan menunjuk arah yang sama. Menaikkan model dari 4B ke 7B menggeser skor inti dari 0,468 ke 0,483 dan tidak menyentuh halusinasi merek. Tiga putaran perbaikan *prompt* gagal menghilangkan merek karangan. Penjaga pasca-generasi menurunkannya ke 0,0%.
 
 Penjelasannya terletak pada sifat persoalannya. Merek tercetak pada kemasan dan terdaftar pada katalog, sehingga tugasnya adalah **mencocokkan**, bukan mengingat. Pencocokan dikerjakan lebih baik oleh pencarian pada kamus daripada oleh parameter model. Temuan ini sejalan dengan arah literatur mitigasi halusinasi yang memakai verifikasi terhadap sumber di luar model [7], dan menambahkan satu hal: verifikasi tersebut tidak harus mahal.
 
-## 4.3 Mengapa harga tidak diserahkan ke model pembelajaran
+### 3.5.3 Mengapa harga tidak diserahkan ke model pembelajaran
 
 Harga jual yang benar bergantung pada empat komponen: Harga Pokok Penjualan milik penjual, tarif komisi platform tujuan, tarif pajak yang berlaku, dan sebaran harga pesaing. Tiga dari empat komponen itu berupa aritmetika bisnis yang eksak.
 
@@ -315,7 +410,9 @@ Model yang dilatih memprediksi harga dari foto hanya akan menghafal harga pasar.
 
 Mesin deterministik menjawab ketiganya: rinciannya dapat dibaca baris demi baris, tarif diperbarui lewat satu berkas konfigurasi, dan zona BAHAYA merupakan keluaran yang sah.
 
-## 4.4 Kepatuhan data dan tata kelola
+### 3.5.4 Kepatuhan data dan tata kelola
+
+**Tabel 3.9** Keputusan tata kelola data
 
 | Aspek | Keputusan |
 |---|---|
@@ -328,37 +425,28 @@ Mesin deterministik menjawab ketiganya: rinciannya dapat dibaca baris demi baris
 
 Halusinasi merek diperlakukan sebagai persoalan hukum, bukan persoalan mutu tulisan. Judul yang menyebut merek milik produk lain berpotensi melanggar hak merek. Judul yang menyebut "500ml" untuk botol 200 ml membuat penjual berhadapan dengan tuntutan pembeli.
 
-## 4.5 Kelayakan adopsi
+### 3.5.5 Kelayakan adopsi
 
 Biaya operasional sistem mendekati nol pada sisi model: `gemma3:4b` dan `qwen2.5:7b` berjalan lokal pada kartu grafis 8 GB tanpa biaya API per gambar, dengan 17,8 detik per produk. Ini yang membuat pemakaian oleh penjual beromzet di bawah Rp500 juta masuk akal secara ekonomi — segmen yang justru terbesar menurut data BPS [2] dan tidak terjangkau oleh alat berbasis API berbayar.
 
 Biaya pemeliharaan terpusat pada satu titik: tarif komisi dan pajak berubah beberapa kali setahun, dan pembaruannya berupa suntingan satu berkas konfigurasi tanpa pelatihan ulang model apa pun.
 
----
+## 3.6 Keterbatasan Hasil
 
-# 5. BATASAN DAN KETERBATASAN
-
-**Batasan cakupan.**
-
-1. LAPAKIN menghasilkan usulan judul, deskripsi, kategori, dan rentang harga. Sistem tidak menerbitkan listing ke marketplace dan tidak terhubung ke API penjual mana pun. Keputusan akhir berada pada penjual.
-2. Masukan berupa satu foto produk dan satu nilai HPP per produk. Sistem tidak menerima video, tidak membaca dokumen faktur, dan tidak menghitung HPP dari komponen bahan baku.
-3. Platform tujuan: Tokopedia, Shopee, dan Blibli. Tarif ketiganya tercatat pada berkas konfigurasi beserta tanggal berlakunya.
-4. Sebaran harga berasal dari 28.443 produk yang dikumpulkan pada Agustus 2026. Sistem tidak memantau harga secara waktu nyata dan tidak mendeteksi perubahan harga pesaing setelah tanggal pengumpulan.
-
-**Keterbatasan hasil.**
-
-5. **Sampel kecil.** Sepuluh produk dan 30 listing per konfigurasi cukup untuk mendeteksi efek besar seperti halusinasi merek dan kepatuhan panjang judul. Sampel ini tidak cukup untuk efek kecil, dan itulah alasan klaim mengenai penghitung harga deterministik tidak diajukan. Perbandingan model visual berjalan pada 100 gambar.
-6. **Metrik hanya menguji konsistensi internal.** Halusinasi merek diukur terhadap keluaran Fitur 1 dan katalog, bukan terhadap isi foto. Bila tahap penglihatan salah membaca, metrik ini tidak akan mendeteksinya. Penilaian manusia atas 50 sampai 100 listing diperlukan untuk menutup celah ini.
-7. **Metrik dapat menyesatkan bila definisinya sama dengan definisi penjaganya**, sebagaimana kasus B lawan F pada Subbab 4.1.
-8. **Kategori masih lemah.** Seluruh sebaran harga bersandar pada `kategori_umkm` yang 37,8% jatuh ke kelas `lainnya` dan 55,2% dipetakan lewat pencocokan kata kunci judul.
-9. **Kesalahan harga yang tersisa bersifat sistematis.** Gaun Eprise berharga asli Rp479.800 memperoleh saran Rp82 ribu sampai Rp176 ribu karena produk pembandingnya gaun murah. Sepatu Zedruz berharga Rp116.899 memperoleh saran Rp75.000. Pencarian berbasis teks tidak dapat membedakan kelas harga di dalam satu jenis barang.
-10. **Tarif platform berlaku pada tanggal tertentu.** Angka komisi yang dipakai berasal dari data Mei sampai Agustus 2026; sistem tidak memantau perubahannya secara otomatis.
-11. **Efek integrasi mesin harga *Market-First* ke pipeline belum diukur**, sebagaimana dinyatakan pada Subbab 3.2.4.
-12. **Penyesuaian model pada Fitur 1 dan Fitur 3 belum dijalankan**, sebagaimana dinyatakan pada Subbab 3.2.5.
+1. **Sampel kecil.** Sepuluh produk dan 30 listing per konfigurasi cukup untuk mendeteksi efek besar seperti halusinasi merek dan kepatuhan panjang judul. Sampel ini tidak cukup untuk efek kecil, dan itulah alasan klaim mengenai penghitung harga deterministik tidak diajukan. Perbandingan model visual berjalan pada 100 gambar.
+2. **Metrik hanya menguji konsistensi internal.** Halusinasi merek diukur terhadap keluaran Fitur 1 dan katalog, bukan terhadap isi foto. Bila tahap penglihatan salah membaca, metrik ini tidak akan mendeteksinya. Penilaian manusia atas 50 sampai 100 listing diperlukan untuk menutup celah ini.
+3. **Metrik dapat menyesatkan bila definisinya sama dengan definisi penjaganya**, sebagaimana kasus B lawan F pada Subbab 3.5.1.
+4. **Kategori masih lemah.** Seluruh sebaran harga bersandar pada `kategori_umkm` yang 37,8% jatuh ke kelas `lainnya` dan 55,2% dipetakan lewat pencocokan kata kunci judul.
+5. **Kesalahan harga yang tersisa bersifat sistematis.** Gaun Eprise berharga asli Rp479.800 memperoleh saran Rp82 ribu sampai Rp176 ribu karena produk pembandingnya gaun murah. Sepatu Zedruz berharga Rp116.899 memperoleh saran Rp75.000. Pencarian berbasis teks tidak dapat membedakan kelas harga di dalam satu jenis barang.
+6. **Tarif platform berlaku pada tanggal tertentu.** Angka komisi yang dipakai berasal dari data Mei sampai Agustus 2026; sistem tidak memantau perubahannya secara otomatis.
+7. **Efek integrasi mesin harga *Market-First* ke pipeline belum diukur**, sebagaimana dinyatakan pada Subbab 3.3.4.
+8. **Penyesuaian model pada Fitur 1 dan Fitur 3 belum dijalankan**, sebagaimana dinyatakan pada Subbab 3.3.5.
 
 ---
 
-# 6. KESIMPULAN
+# BAB IV KESIMPULAN DAN SARAN
+
+## 4.1 Kesimpulan
 
 1. Pipeline dua tahap yang memakai `gemma3:4b` untuk ekstraksi visual dan `qwen2.5:7b` untuk penyusunan teks menghasilkan judul, deskripsi, dan kategori produk dari satu foto dengan waktu **17,8 detik per produk** pada perangkat berkartu grafis 8 GB, tanpa biaya API. Pemecahan pipeline menjadi dua fase memangkas waktu dari sekitar 300 detik per produk.
 
@@ -372,7 +460,21 @@ Biaya pemeliharaan terpusat pada satu titik: tarif komisi dan pajak berubah bebe
 
 6. Katalog 28.443 produk berperan sebagai rujukan saat inferensi. Memperbarui tarif komisi atau tarif pajak menuntut perubahan satu berkas konfigurasi, tanpa pelatihan ulang model — sifat yang penting mengingat tarif berubah dua kali dalam rentang Mei sampai Juli 2026.
 
-**Yang belum selesai dan akan dikerjakan pada tahap berikutnya:** penyesuaian model pada Fitur 1 dan Fitur 3 memakai 27.997 pasangan latih yang sudah tersedia beserta pembandingnya terhadap keluaran *prompt-only*; pengukuran efek integrasi mesin harga *Market-First* ke pipeline; temu kembali berbasis kemiripan gambar seperti CLIP [11] untuk memisahkan kelas harga di dalam satu jenis barang; perbaikan label `kategori_umkm`; penilaian manusia atas 50 sampai 100 listing; dan pembesaran sampel ablasi.
+## 4.2 Saran
+
+1. **Menyelesaikan penyesuaian model pada Fitur 1 dan Fitur 3.** Pasangan latih 27.997 baris sudah tersedia; yang belum ada adalah bobot hasil latih beserta pembandingnya terhadap keluaran *prompt-only*. Ini pekerjaan terdekat yang harus diselesaikan, sebagaimana dinyatakan pada Subbab 3.3.5.
+
+2. **Mengukur efek integrasi mesin harga ke pipeline.** Perintah ablasinya sudah tercatat pada Lampiran 2 dan tinggal dijalankan.
+
+3. **Menambahkan temu kembali berbasis kemiripan gambar.** Kesalahan harga yang tersisa berasal dari produk pembanding yang jenisnya benar tetapi kelas harganya berbeda, seperti kasus Gaun Eprise pada Subbab 3.6. Representasi visual bersama seperti CLIP [11] berpotensi memisahkan gaun premium dari gaun pasar, sesuatu yang tidak dapat dilakukan pencarian berbasis teks.
+
+4. **Memperbaiki label `kategori_umkm`.** Seluruh saran harga bertumpu pada label yang 37,8% jatuh ke kelas `lainnya`. Perbaikan label akan menaikkan mutu setiap keluaran harga sekaligus.
+
+5. **Menjalankan penilaian manusia atas 50 sampai 100 listing.** Metrik otomatis tidak dapat mendeteksi kesalahan baca pada tahap penglihatan.
+
+6. **Memperbesar sampel ablasi.** Sepuluh produk cukup untuk efek besar. Efek kecil, termasuk kontribusi penghitung harga deterministik, menuntut sampel yang lebih besar sebelum klaim apa pun diajukan.
+
+7. **Membangun mekanisme pembaruan tarif.** Tarif komisi marketplace berubah beberapa kali dalam setahun. Pemantauan terjadwal atas halaman tarif resmi akan menjaga hasil hitung tetap benar.
 
 ---
 
@@ -424,22 +526,22 @@ python scripts/build_train_pairs.py
 python scripts/build_platform_profiles.py
 python scripts/build_lexicon.py
 
-# Subbab 3.2.1: perbandingan model visual
+# Subbab 3.3.1: perbandingan model visual
 python scripts/probe_vlm_baseline.py --model gemma3:4b --n 100
 
-# Subbab 3.2.3: ablasi komponen listing
+# Subbab 3.3.3: ablasi komponen listing
 python scripts/retrieve_pipeline.py --n 10 --platform all --iris 0:5  --panjangkan --keluaran data_drive/eval/B.jsonl
 python scripts/retrieve_pipeline.py --n 10 --platform all --iris 5:10 --panjangkan --keluaran data_drive/eval/B.jsonl
 python scripts/eval_listing.py data_drive/eval/A.jsonl data_drive/eval/B.jsonl
 
-# Subbab 3.2.4: mesin penetapan harga, luring
+# Subbab 3.3.4: mesin penetapan harga, luring
 python scripts/pricing_demo_offline.py
 
-# Subbab 3.2.4: efek integrasi Market-First ke pipeline (BELUM DIJALANKAN)
+# Subbab 3.3.4: efek integrasi Market-First ke pipeline (BELUM DIJALANKAN)
 python scripts/retrieve_pipeline.py --n 10 --platform all --hpp 25000 --keluaran data_drive/eval/J.jsonl
 python scripts/eval_listing.py data_drive/eval/I.jsonl data_drive/eval/J.jsonl
 
-# Subbab 3.1.4: statistik dataset
+# Subbab 3.2.4: statistik dataset
 python main.py stats
 
 # Uji, luring total
