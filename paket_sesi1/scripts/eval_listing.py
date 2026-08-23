@@ -202,6 +202,12 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
                 m["harga_logerr"].append(abs(math.log(harga / asli)))
                 m["harga_2x"].append(0.5 <= harga / asli <= 2.0)
                 # tebakan mentah model, disimpan sebelum ditimpa hitungan katalog
+                # PERINGATAN: harga_model BUKAN tebakan yang berdiri sendiri.
+                # ringkas_konteks menaruh median harga tetangga langsung di
+                # prompt ("tengah Rp53.470"), jadi model menuliskan angka yang
+                # praktis sama dengan yang nanti dihitung katalog -- sama persis
+                # di 70% baris S3. Metrik ini tidak boleh dikutip sebagai bukti
+                # bahwa harga_deterministik menambah nilai. Lihat OPTIMASI.md.
                 hm = h.get("harga_model")
                 try:
                     hm = float(hm)

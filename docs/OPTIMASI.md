@@ -146,6 +146,67 @@ Penghitung itu kupertahankan sebagai jaring pengaman, bukan penyumbang angka.
 Klaim yang jujur: **perbaikannya datang dari membetulkan prompt**, dan buktinya
 harga kini menempel ke katalog, bukan ke tengah rentang kategori.
 
+#### Sebabnya, ditemukan belakangan: model diberi tahu jawabannya
+
+Catatan di atas mengamati gejalanya tapi tidak menjelaskan mekanismenya.
+Penyebabnya `ringkas_konteks`, yang menaruh median harga tetangga **langsung di
+dalam prompt**:
+
+    Kisaran harga pasar untuk barang serupa: Rp45.000 - Rp62.000 (tengah Rp53.470)
+
+Model membaca "tengah Rp53.470" lalu menuliskan Rp53.500. `harga_deterministik`
+kemudian menghitung median yang sama dan menimpanya dengan angka yang praktis
+identik. Pada 214 baris S3 yang dinilai di platform asalnya, `perkiraan_harga`
+dan `harga_model` **sama persis di 70%**.
+
+Dua akibatnya:
+
+1. `harga_model_err%` **bukan ukuran yang berdiri sendiri**. Ia seharusnya
+   mengukur tebakan model sebelum katalog membetulkannya, tapi tebakan itu
+   sudah bersumber dari katalog. Jangan dikutip sebagai bukti bahwa penghitung
+   deterministik menambah nilai.
+2. Menggantinya dengan tebakan model saat tetangga tidak sepadan tidak akan
+   menolong — keduanya berasal dari sumber yang sama. Diuji: pada baris yang
+   sebaran harga tetangganya di atas 6x, galat katalog dan galat model
+   sama-sama 0,365.
+
+Untuk benar-benar mengukur sumbangan penghitung itu, `ringkas_konteks` harus
+berhenti menyebut angka harga, lalu keduanya dijalankan berdampingan. Belum
+dikerjakan.
+
+### 3b. Harga: tidak ada perbaikan murah yang tersedia
+
+Dua cara diuji tanpa GPU pada data S3, keduanya ditolak datanya sendiri.
+
+**Normalisasi per satuan isi.** Median tetangga menggambarkan ukuran kemasan
+yang salah — keripik 250 g disandingkan tetangga 150 g dan 500 g. Diuji pada 53
+produk yang punya ukuran di kedua sisi:
+
+| aturan | \|log\| median | dalam 2x |
+|---|---:|---:|
+| median harga (sekarang) | 0,418 | 66,0% |
+| per satuan isi | 0,442 | 62,3% |
+
+19 membaik, 15 memburuk, 19 setara. Perbaikan besarnya nyata — tepung terigu
+1 kg dari Rp150.000 jadi Rp18.000 lawan harga asli Rp17.400 — tapi kerusakannya
+juga nyata, dan sumbernya bundel: "Minyak Kunci Mas 2 L Satu Dus isi 6" punya
+ukuran per botol sementara harganya per dus. Tidak sepadan dengan pengurai
+ukuran, konversi satuan, dan deteksi bundel yang harus dibangun.
+
+**Menahan diri saat tetangga berselisih jauh.** Pada 216 produk bertetangga:
+
+| aturan | cakupan | \|log\| median | dalam 2x |
+|---|---:|---:|---:|
+| semua (sekarang) | 100% | 0,300 | 71,8% |
+| sebaran ≤ 10x | 75,9% | 0,295 | 72,6% |
+| sebaran ≤ 6x | 62,0% | 0,256 | 76,9% |
+| sebaran ≤ 4x | 53,2% | 0,223 | 80,0% |
+
+Bekerja, tapi bentuknya sama dengan ambang CLIP: cakupan ditukar ketepatan,
+bukan perbaikan gratis. Ambang 10x bahkan membuang 24% cakupan tanpa menambah
+ketepatan sama sekali. Menambah dial kedua yang sejenis belum tentu perbaikan
+desain, jadi ditinggalkan sebagai pilihan tercatat, bukan diterapkan.
+
 ### 4. Pipeline dua fase — berhasil, di sisi kecepatan
 
 **Masalah.** VRAM 8 GB tidak muat `gemma3:4b` dan `qwen2.5:7b` sekaligus. Loop
