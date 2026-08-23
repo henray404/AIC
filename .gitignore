@@ -32,3 +32,12 @@ venv/
 
 # Notebooks
 .ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Rulebook panitia (59 MB, PDF gambar) — dokumen pihak ketiga, bukan karya tim
+\[AIC\]*.pdf
+
+# Cadangan draf proposal versi lama
+docs/.PROPOSAL_*_backup.md
