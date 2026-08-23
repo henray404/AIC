@@ -11,7 +11,7 @@ produk), sehingga angkanya tidak boleh disandingkan lintas tabel — dan sampel
 melatih model sulingan. Halaman ini menggantikannya seluruhnya.
 
 > **Versi kode.** Seluruh angka di halaman ini dihasilkan kode pada tag git
-> `sesi-3` (commit `0fe3c49`). Untuk mereproduksinya: `git checkout sesi-3`.
+> `sesi-3` (commit `5c94ed3`). Untuk mereproduksinya: `git checkout sesi-3`.
 >
 > Kode di `main` sudah lebih baik sejak itu — halusinasi merek 3× lebih rendah
 > dan kategori selalu sah. Perbaikannya sudah diukur, tapi baru pada satu
