@@ -28,6 +28,7 @@ import requests
 from PIL import Image
 
 from build_train_pairs import clean_title
+from pricing_engine import PricingEngine, hitung_bep, tentukan_zona, bulatkan_psikologis
 
 PROJECT = Path(__file__).resolve().parent.parent
 SUMBER = PROJECT / "data_drive" / "merged" / "merged_local.parquet"
@@ -452,6 +453,16 @@ def main():
     ap.add_argument("--panjangkan", action="store_true",
                     help="tambah kata kunci dari katalog sampai judul mencapai panjang lazim")
     ap.add_argument("--keluaran", default=None, help="tulis ke berkas ini")
+    # ── Pricing Engine (market-first) ──
+    ap.add_argument("--hpp", type=int, default=None,
+                    help="HPP per unit jual (Rupiah). Kalau diisi, pricing engine "
+                         "market-first dipakai menggantikan harga_deterministik")
+    ap.add_argument("--hpp-satuan", default="pcs",
+                    help="satuan HPP: pcs, kg, lusin, dll (default: pcs)")
+    ap.add_argument("--hpp-jumlah", type=float, default=1.0,
+                    help="berapa satuan dari HPP (default: 1)")
+    ap.add_argument("--packing", type=int, default=0,
+                    help="biaya packing per unit (Rupiah, default: 0)")
     # Irisan dipakai supaya satu konfigurasi bisa dikerjakan beberapa kali tanpa
     # mengubah sampelnya: seed sama -> urutan sama -> potongan a:b selalu produk
     # yang sama. Perlu karena satu run penuh kena batas waktu proses latar.
@@ -466,6 +477,12 @@ def main():
 
     indeks = Indeks(df["title_bersih"].tolist())
     print(f"indeks: {len(indeks.inverted):,} istilah unik")
+
+    # Pricing Engine (hanya kalau --hpp diberikan)
+    pricing_engine = None
+    if args.hpp is not None:
+        pricing_engine = PricingEngine(SUMBER)
+        print(f"pricing engine: aktif (HPP Rp{args.hpp:,}/{args.hpp_satuan})")
 
     if args.hanya_cari:
         for i, s in indeks.cari(args.hanya_cari, args.k):
@@ -556,11 +573,41 @@ def main():
                     h, galat = {}, f"{type(e).__name__}: {e}"[:150]
                 if isinstance(h, dict) and h and "_mentah" not in h:
                     h["harga_model"] = h.get("perkiraan_harga")
-                    hitung = (None if args.tanpa_harga_hitung else
-                              harga_deterministik(tetangga if pakai else None, profil,
-                                                  plat, s["kat"], faktor_global))
-                    if hitung:
-                        h["perkiraan_harga"] = hitung
+                    if args.hpp is not None:
+                        # ── Market-First Pricing Engine ──
+                        from pricing_engine import KONVERSI_SATUAN
+                        jumlah = args.hpp_jumlah * KONVERSI_SATUAN.get(args.hpp_satuan, 1)
+                        hpp_unit = int(args.hpp / max(jumlah, 1)) + args.packing
+                        try:
+                            pr = pricing_engine.hitung(
+                                deskripsi=fakta,
+                                hpp_per_unit=hpp_unit,
+                                platform=plat or "tokopedia",
+                            )
+                            h["perkiraan_harga"] = pr.harga_rekomendasi
+                            h["harga_bep"] = pr.harga_minimum
+                            h["harga_agresif"] = pr.harga_agresif
+                            h["harga_premium"] = pr.harga_premium
+                            h["zona_harga"] = pr.zona
+                            h["margin_persen"] = pr.margin_persen
+                            h["breakdown"] = pr.breakdown
+                            if pr.peringatan:
+                                h["peringatan_harga"] = pr.peringatan
+                            if pr.saran:
+                                h["saran_harga"] = pr.saran
+                        except Exception as e:
+                            h["_pricing_error"] = f"{type(e).__name__}: {e}"[:150]
+                            hitung = harga_deterministik(
+                                tetangga if pakai else None, profil,
+                                plat, s["kat"], faktor_global)
+                            if hitung:
+                                h["perkiraan_harga"] = hitung
+                    else:
+                        hitung = (None if args.tanpa_harga_hitung else
+                                  harga_deterministik(tetangga if pakai else None, profil,
+                                                      plat, s["kat"], faktor_global))
+                        if hitung:
+                            h["perkiraan_harga"] = hitung
                     if lex and h.get("judul"):
                         bersih, dibuang = saring_merek(
                             str(h["judul"]), fakta, tetangga if pakai else None, lex)
