@@ -107,7 +107,13 @@ Lawan baseline 12B — angka baseline dari S3, sah dibandingkan karena
 | `price_logerr` | **0,300** | 0,788 |
 | `length_ok%` | 25,6 | **55,4** |
 
-Delapan dari sembilan kolom. Halusinasi merek **12× lebih jarang**.
+Delapan dari sembilan kolom.
+
+> **PERINGATAN.** Baris `brand_strict%`, `spec_halluc%`, dan
+> `desc_ungrounded%` di kedua tabel di atas **tidak sah**. Penilaian manusia
+> mengukur recall-nya 6,7%, 0,0%, dan 9,1% — ketiganya melewatkan hampir
+> seluruh halusinasi yang dilihat manusia. Jangan kutip selisihnya. Lihat
+> [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
 
 ## Ongkosnya, dan kenapa tetap diambil
 

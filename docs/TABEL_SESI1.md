@@ -13,10 +13,42 @@ melatih model sulingan. Halaman ini menggantikannya seluruhnya.
 > **Versi kode.** Seluruh angka di halaman ini dihasilkan kode pada tag git
 > `sesi-3` (commit `5c94ed3`). Untuk mereproduksinya: `git checkout sesi-3`.
 >
-> Kode di `main` sudah lebih baik sejak itu — halusinasi merek 3× lebih rendah
-> dan kategori selalu sah. Perbaikannya sudah diukur, tapi baru pada satu
-> konfigurasi, jadi tidak dicampurkan ke sini supaya keenam bagian di bawah
-> tetap sebanding satu sama lain. Lihat **[PERBAIKAN_SETELAH_S3.md](PERBAIKAN_SETELAH_S3.md)**.
+> Kode di `main` sudah berubah sejak itu. Perbaikannya sudah diukur, tapi baru
+> pada satu konfigurasi, jadi tidak dicampurkan ke sini supaya keenam bagian di
+> bawah tetap sebanding satu sama lain. Lihat
+> **[PERBAIKAN_SETELAH_S3.md](PERBAIKAN_SETELAH_S3.md)**.
+
+> ## PERINGATAN: dua metrik di halaman ini TIDAK SAH
+>
+> Penilaian manusia (51 listing, 1 penilai, 23 Agustus 2026) membantah
+> `brand_strict%` dan `spec_halluc%`:
+>
+> | metrik | recall | presisi | artinya |
+> |---|---:|---:|---|
+> | `brand_strict%` | **6,7%** | 100% | melewatkan 93% halusinasi yang dilihat manusia |
+> | `spec_halluc%` | **0,0%** | — | tidak menangkap satu pun |
+> | `desc_ungrounded%` | **9,1%** | 100% | melewatkan 91% |
+>
+> Presisi 100% berarti tuduhannya selalu benar — tapi ia **hampir tidak pernah
+> menuduh**. Detektor yang selalu menjawab "bersih" tetap terlihat sepakat
+> 72–80% dengan manusia semata karena halusinasinya memang jarang.
+>
+> Sebabnya: ketiganya hanya mencari **nama merek dan istilah langka**. Yang
+> dilewatkan adalah warna, aroma, rasa, dan sifat produk — semuanya kata
+> Indonesia lazim, jadi lolos aturan `w not in lex["umum"]`:
+>
+> ```
+> "Sepatu Lari Pria Hitam"             foto: sepatu Puma Future
+> "Sabun Mandi Aroma Citrus Segar"     foto: sabun cuci beras SEZA
+> "Cheek & Lip Tint Warna Merah Muda"  foto: Implora liptint
+> ```
+>
+> **Jangan kutip klaim halusinasi dari halaman ini.** Analisis lengkapnya di
+> [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
+>
+> Metrik lain tidak terpengaruh: `title_recall`, `price_logerr`,
+> `price_within2x%`, dan `category_valid%` punya definisi objektif yang tidak
+> bergantung pada penilaian.
 
 ## Sistem yang diuji
 
@@ -200,15 +232,24 @@ pada 44% produk.
 | klaim | status | angka |
 |---|---|---|
 | harga 2,6× lebih tepat | berdiri | `price_logerr` 0,300 lawan 0,788 |
-| deskripsi bebas kata asing | berdiri | 0,0% lawan 28,3% — dijamin penjaga |
-| spesifikasi hampir tak pernah dikarang | berdiri | 0,9% lawan 24,1% |
 | judul 1,4× lebih cocok | berdiri | `title_recall` 0,364 lawan 0,267 |
-| halusinasi merek 4× lebih jarang | berdiri | `brand_strict%` 3,6 lawan 14,4 |
 | 1,4× lebih cepat per listing | berdiri | 1,39 lawan 1,91 detik |
 | student 3B mengalahkan 12B | berdiri | `title_recall` 0,315 lawan 0,267 |
 | judul lebih patuh panjang platform | **gugur** | 39,7% lawan 55,4% — baseline menang |
 | "ambang 0,75 optimal" | **gugur** | pertukaran murni, tak ada yang mendominasi |
+| **deskripsi bebas kata asing** | **TAK SAH** | metriknya melewatkan 91% halusinasi (recall 9,1%) |
+| **spesifikasi hampir tak pernah dikarang** | **TAK SAH** | metriknya menangkap 0% (recall 0,0%) |
+| **halusinasi merek 4× lebih jarang** | **TAK SAH** | metriknya melewatkan 93% (recall 6,7%) |
 | kecepatan student | **tak sah** | tumpukan penyajian berbeda |
+
+Ketiga klaim halusinasi ditandai tak sah setelah penilaian manusia, bukan
+karena sistemnya buruk melainkan karena **metriknya tidak mengukur apa yang
+namanya janjikan**. Apakah pipeline benar-benar lebih jarang mengarang masih
+terbuka — belum ada ukuran sah yang menjawabnya.
+
+Penilaian manusia pada 51 listing justru mencatat pipeline **lebih sering**
+mengarang judul daripada baseline (6/17 lawan 3/17), tapi sampelnya terlalu
+kecil untuk menyimpulkan. Lihat [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
 
 ## Berkas sumber
 
