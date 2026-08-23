@@ -108,6 +108,7 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
     m: dict[str, list] = {k: [] for k in
                           ("json_valid", "harga_err", "harga_model_err", "spek_karang",
                            "merek_karang", "merek_sempit", "merek_ketat",
+                           "kata_asing",
                            "harga_cakupan", "harga_logerr", "harga_2x",
                            "kategori_sah", "kategori_benar",
                            "panjang_patuh", "inti",
@@ -147,6 +148,29 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
 
             karang_angka = [a for a in ANGKA.findall(judul) if a.lower() not in angka_terlihat]
             m["spek_karang"].append(bool(karang_angka))
+
+            # Satu-satunya ukuran halusinasi yang tervalidasi manusia. Aturannya
+            # sesederhana mungkin -- ADA kata di judul yang tidak muncul di
+            # bacaan foto -- dan justru itu yang paling sejalan dengan penilaian
+            # manusia dari semua varian yang diuji pada 51 listing berlabel:
+            #
+            #   aturan                          recall  presisi    F1
+            #   merek/istilah langka (lama)        6,7    100,0   12,5
+            #   ADA kata asing                    93,3     35,0   50,9  <- dipakai
+            #   kata asing >= 3                   60,0     39,1   47,4
+            #   porsi kata asing > 40% judul      66,7     34,5   45,5
+            #   daftar atribut warna/rasa/bahan   26,7     33,3   29,6
+            #
+            # Presisi 35% berarti dua dari tiga tuduhannya tidak dibenarkan
+            # manusia -- kata jenis dan kata jualan ("kaleng", "praktis") ikut
+            # terhukum. Itu HARUS dilaporkan bersama angkanya. Metrik ini sah
+            # untuk MEMBANDINGKAN sistem karena semuanya dihukum dengan cara
+            # yang sama, bukan sebagai kadar halusinasi mutlak.
+            #
+            # Katalog sengaja tidak memaafkan: pipeline punya katalog dan
+            # pembanding tidak. Lihat docs/PENILAIAN_MANUSIA.md.
+            m["kata_asing"].append(bool(kj - terlihat))
+
             asing = kj - terlihat - katalog
             m["merek_karang"].append(bool(asing))
             # Ukuran ketat: bukti penglihatan saja yang memaafkan, katalog tidak.
@@ -279,6 +303,7 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
         "merek_karang%": round(100 * rata("merek_karang"), 1),
         "merek_sempit%": round(100 * rata("merek_sempit"), 1),
         "merek_ketat%": round(100 * rata("merek_ketat"), 1),
+        "kata_asing%": round(100 * rata("kata_asing"), 1),
         "panjang_patuh%": round(100 * rata("panjang_patuh"), 1),
         "inti": round(rata("inti"), 3),
         "desk_char": round(rata("desk_char")),
@@ -329,7 +354,8 @@ def main():
 
     kunci = ["berkas", "n_listing", "json_valid%", "harga_err%", "spek_karang%",
              "harga_logerr", "harga_2x%", "harga_cakupan%", "n_harga",
-             "kategori_sah%", "kategori_benar%", "merek_sempit%", "merek_ketat%",
+             "kategori_sah%", "kategori_benar%", "kata_asing%",
+             "merek_sempit%", "merek_ketat%",
              "panjang_patuh%", "inti", "detik", "detik_listing"]
     kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
                   "desk_sampah%", "desk_ulang%", "desk_potong%"]
