@@ -62,3 +62,4 @@ model_sulingan.zip
 # bisa dibuat ulang dengan scripts/buat_penilaian.py.
 penilaian/*.html
 penilaian/hasil*.json
+!penilaian/CARA_MENILAI.md
