@@ -535,7 +535,7 @@ Biaya pemeliharaan terpusat pada satu titik: tarif komisi dan pajak berubah bebe
 
 5. **Menjalankan penilaian manusia atas 50 sampai 100 listing.** Metrik otomatis tidak dapat mendeteksi kesalahan baca pada tahap penglihatan.
 
-6. **Menjalankan satu rangkaian pengujian tunggal pada n=100.** Angka-angka pada dokumen ini berasal dari beberapa rangkaian n=10 dengan sakelar berbeda dan tidak sebanding satu sama lain. `paket_sesi1/sesi1.sh` mengukur ketiga tingkat eksklusi beserta pembanding `gemma3:12b` dalam satu jalan; hasilnya menggantikan Tabel 3.3, Tabel 3.5, dan Tabel 3.6. Sepuluh produk cukup untuk efek besar, tidak untuk efek kecil seperti kontribusi penghitung harga deterministik.
+6. **Menjalankan satu rangkaian pengujian tunggal pada n=100.** Angka-angka pada dokumen ini berasal dari beberapa rangkaian n=10 dengan sakelar berbeda dan tidak sebanding satu sama lain. `paket_sesi1/sesi1.sh` mengukur ketiga tingkat eksklusi beserta pembanding `gemma3:12b` pada n=100 dalam satu jalan; hasilnya menggantikan Tabel 3.6. Tabel 3.3 dan Tabel 3.5 tidak ikut tergantikan karena keduanya menuntut sakelar ablasi yang dimatikan satu per satu, dan itu pekerjaan terpisah yang belum dijadwalkan. Sepuluh produk cukup untuk efek besar, tidak untuk efek kecil seperti kontribusi penghitung harga deterministik.
 
 7. **Membangun mekanisme pembaruan tarif.** Tarif komisi marketplace berubah beberapa kali dalam setahun. Pemantauan terjadwal atas halaman tarif resmi akan menjaga hasil hitung tetap benar.
 
