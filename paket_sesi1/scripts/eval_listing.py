@@ -21,7 +21,15 @@ Metrik yang dipakai:
                   presisi 35%). Presisi 35% berarti angka mutlaknya BUKAN kadar
                   halusinasi -- yang bermakna selisih antar sistem
   panjang_patuh   panjang judul masuk rentang target platform
-  inti            berapa bagian kata judul asli yang berhasil disebut ulang
+  inti_f1         kecocokan judul dengan judul asli, seimbang antara menyebut
+                  ulang dan tidak menggelembungkan. INI yang dipakai
+                  membandingkan sistem
+  inti            recall murni. Tidak menghukum kata tambahan sama sekali,
+                  jadi bisa dinaikkan dengan keyword stuffing -- menempelkan
+                  12 kata tersering katalog ke tiap judul menaikkannya +0,022
+                  sementara inti_f1 turun 0,184
+  inti_presisi    berapa bagian kata judul buatan yang benar-benar ada di
+                  judul asli
 
 Metrik yang GUGUR, disembunyikan kecuali dengan --semua:
   spek_karang, merek_sempit, merek_ketat, desk_spek, desk_asing
@@ -129,7 +137,7 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
                            "kata_asing",
                            "harga_cakupan", "harga_logerr", "harga_2x",
                            "kategori_sah", "kategori_benar",
-                           "panjang_patuh", "inti",
+                           "panjang_patuh", "inti", "inti_presisi", "inti_f1",
                            "desk_char", "desk_spek", "desk_asing", "desk_klaim",
                            "desk_sampah", "desk_ulang", "desk_potong", "detik")}
     per_platform: dict[str, list] = {}
@@ -273,9 +281,32 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
                 lo, hi = p["target_kata"]
                 m["panjang_patuh"].append(lo <= len(judul.split()) <= hi)
 
+            # `inti` itu RECALL murni: berapa bagian kata judul asli yang
+            # berhasil disebut ulang. Ia tidak menghukum kata tambahan sama
+            # sekali, jadi bisa dinaikkan dengan menggelembungkan judul --
+            # persis kebiasaan keyword stuffing yang justru ingin dihindari.
+            #
+            # Diuji dengan menempelkan 12 kata tersering di katalog ke SETIAP
+            # judul, tanpa melihat produknya:
+            #
+            #   kata sampah   inti (recall)   inti_f1
+            #             0          0,346     0,398
+            #             4          0,355     0,306
+            #            12          0,368     0,214
+            #
+            # Recall naik +0,022 -- cukup untuk membalik selisih pipeline lawan
+            # student (0,346 lawan 0,315). F1 turun 0,184 pada serangan yang
+            # sama. Karena itu inti_f1 yang dipakai membandingkan sistem.
+            #
+            # `inti` dipertahankan supaya angka lama bisa direproduksi.
             emas = kata(r.get("judul_asli", ""))
-            if emas:
-                m["inti"].append(len(emas & kj) / len(emas))
+            if emas and kj:
+                irisan = len(emas & kj)
+                m["inti"].append(irisan / len(emas))
+                m["inti_presisi"].append(irisan / len(kj))
+                m["inti_f1"].append(2 * irisan / (len(emas) + len(kj)))
+            elif emas:
+                m["inti"].append(0.0)
             m["desk_char"].append(len(str(h.get("deskripsi", ""))))
             per_platform.setdefault(plat, []).append(len(judul.split()))
 
@@ -324,6 +355,8 @@ def nilai(path: Path, profil: dict, hanya: set[str] | None = None,
         "kata_asing%": round(100 * rata("kata_asing"), 1),
         "panjang_patuh%": round(100 * rata("panjang_patuh"), 1),
         "inti": round(rata("inti"), 3),
+        "inti_presisi": round(rata("inti_presisi"), 3),
+        "inti_f1": round(rata("inti_f1"), 3),
         "desk_char": round(rata("desk_char")),
         "desk_spek%": round(100 * rata("desk_spek"), 1),
         "desk_asing%": round(100 * rata("desk_asing"), 1),
@@ -386,7 +419,8 @@ def main():
              "harga_logerr", "harga_2x%", "harga_cakupan%", "n_harga",
              "kategori_sah%", "kategori_benar%", "kata_asing%",
              "spek_karang%", "merek_sempit%", "merek_ketat%",
-             "panjang_patuh%", "inti", "detik", "detik_listing"]
+             "panjang_patuh%", "inti", "inti_presisi", "inti_f1",
+             "detik", "detik_listing"]
     kunci_desk = ["berkas", "desk_char", "desk_spek%", "desk_asing%", "desk_klaim%",
                   "desk_sampah%", "desk_ulang%", "desk_potong%"]
     if not args.semua:
