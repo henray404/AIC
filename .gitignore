@@ -44,3 +44,15 @@ model_sulingan/*/tokenizer.json
 
 # Keluaran eksperimen sesi 2 (219 MB). Sama seperti hasil_sesi1.
 hasil_sesi2/
+
+# Paket gambar untuk dikirim ke server sewaan (1,9 GB, bisa dibuat ulang
+# dari data/images). Sempat ikut ter-commit karena `git add` terlalu luas.
+tokopedia_gambar1.tar
+*.tar
+
+# Salinan adapter di akar repo, sisa scp lama. Yang dipakai ada di
+# model_sulingan/ dan bobotnya sudah diabaikan di sana.
+/murid_lora/
+/murid_vlm_lora/
+/guru.jsonl
+model_sulingan.zip
