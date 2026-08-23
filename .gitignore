@@ -41,3 +41,6 @@ venv/
 
 # Cadangan draf proposal versi lama
 docs/.PROPOSAL_*_backup.md
+
+# Paket kirim ke server sewaan (hasil generasi, bisa dibuat ulang)
+hasil_sesi1/

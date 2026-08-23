@@ -209,7 +209,12 @@ python scripts/eval_listing.py data_drive/eval/A.jsonl data_drive/eval/B.jsonl
 
 Tiap perbaikan bisa dimatikan sendiri untuk diukur efeknya: `--tanpa-harga-hitung`,
 `--tanpa-saring-merek`, `--tanpa-contoh-pola`, dan `--panjangkan` untuk menyalakan
-pemanjangan judul. Rinciannya di **[docs/OPTIMASI.md](docs/OPTIMASI.md)**.
+pemanjangan judul.
+
+Pelanggaran di deskripsi (klaim khasiat, merek karangan, ukuran palsu) ditangani
+tiga lapis dan bawaannya `--desk-mode kombinasi`: larangan di prompt, lalu tulis
+ulang, lalu buang kalimat kalau masih melanggar. Rinciannya di
+**[docs/OPTIMASI.md](docs/OPTIMASI.md)**.
 
 Datasetnya dipakai **saat model bekerja** — sebagai katalog rujukan untuk merek,
 istilah, dan harga — bukan dilebur jadi bobot lewat fine-tune.
