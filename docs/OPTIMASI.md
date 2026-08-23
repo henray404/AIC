@@ -362,10 +362,18 @@ dijamin konstruksi.
 |---|---|
 | harga ~1,6× lebih akurat | berdiri — 33,1% lawan 53,3% pada 29 produk yang sama |
 | ~1,5× lebih cepat per listing | berdiri — 1,43 lawan 2,12 detik |
-| deskripsi bebas kata asing | berdiri — 0,0% lawan 24,7%, dijamin penjaga |
 | judul lebih cocok produk aslinya | berdiri — inti 0,410 lawan 0,229 |
-| "hampir tanpa halusinasi merek" | **gugur** — 8,6% lawan 11,5%, unggul tipis, bukan mutlak |
+| ~~deskripsi bebas kata asing~~ | **gugur** — metriknya (`desc_ungrounded%`) melewatkan 91% halusinasi |
+| ~~"hampir tanpa halusinasi merek"~~ | **gugur** — metriknya melewatkan 93% |
 | unggul 2,4× kecepatan | **gugur** — itu detik per produk atas jumlah platform berbeda |
+
+> **Catatan belakangan.** Kedua klaim halusinasi di atas gugur setelah
+> penilaian manusia pada 51 listing (23 Agustus 2026). `desc_ungrounded%` dan
+> `brand_strict%` hanya mencari nama merek dan istilah langka, sehingga
+> melewatkan warna, aroma, rasa, dan sifat produk — kata Indonesia lazim yang
+> justru paling sering dikarang. Penggantinya `ungrounded_words%` mencatat
+> selisih yang jauh lebih kecil. Lihat
+> [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
 
 ## Ablasi: memanjangkan judul menyelundupkan merek
 

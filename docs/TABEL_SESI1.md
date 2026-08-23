@@ -114,16 +114,25 @@ sesi-3`.
 
 Deskripsi:
 
-| system | exclusion | desc_chars | desc_spec% | desc_ungrounded% | desc_claims% | desc_boilerplate% | desc_truncated% |
-|---|---|---:|---:|---:|---:|---:|---:|
-| RAG pipeline | self | 126 | 0,4 | 0,0 | 0,0 | 0,1 | 0,1 |
-| **RAG pipeline** | **product line** | 123 | 0,4 | 0,0 | 0,0 | 0,0 | 0,5 |
-| RAG pipeline | category | 122 | 0,7 | 0,0 | 0,0 | 0,0 | 0,7 |
-| Baseline 12B | — | 188 | 7,9 | 28,3 | 0,5 | 0,2 | 0,0 |
+| system | exclusion | desc_chars | desc_claims% | desc_boilerplate% | desc_truncated% |
+|---|---|---:|---:|---:|---:|
+| RAG pipeline | self | 126 | 0,0 | 0,1 | 0,1 |
+| **RAG pipeline** | **product line** | 123 | 0,0 | 0,0 | 0,5 |
+| RAG pipeline | category | 122 | 0,0 | 0,0 | 0,7 |
+| Baseline 12B | — | 188 | 0,5 | 0,2 | 0,0 |
 
-Halusinasi deskripsi tetap **nol di ketiga tingkat** sementara cakupan turun
-70,3% → 44,5% → 18,9%. Sistem tidak memburuk saat kesulitan naik; ia makin
-sering memilih diam.
+Kolom `desc_ungrounded%` dan `desc_spec%` dibuang — keduanya gugur bersama
+metrik halusinasi judul, dengan sebab yang sama.
+
+Yang tersisa di tabel ini tetap sah karena mencocokkan **daftar frasa
+tertutup**, bukan menebak apakah sesuatu berdasar:
+
+- `desc_claims%` — garansi, BPOM, halal, SNI, klaim khasiat
+- `desc_boilerplate%` — "selamat datang", nomor WA, "gratis ongkir"
+- `desc_truncated%` — kalimat terpotong karena anggaran token habis
+
+Pipeline nol di ketiganya pada semua tingkat; baseline menyebut klaim
+terlarang di 0,5% listing dan basa-basi lapak di 0,2%.
 
 ---
 

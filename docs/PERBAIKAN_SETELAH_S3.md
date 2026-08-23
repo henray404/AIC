@@ -86,12 +86,20 @@ Konfigurasi identik: exclusion `product line`, 492 produk yang sama, platform
 |---|---:|---:|---|
 | `category_valid%` | 41,6 | **100,0** | semua sah |
 | `category_correct%` | 36,4 | **65,9** | +81% relatif |
-| `brand_strict%` | 3,6 | **1,2** | 3× lebih bersih |
+| `ungrounded_words%` | 85,4 | **84,3** | −1,1 poin |
 | `price_err%` | 29,9 | **28,8** | |
 | `price_logerr` | 0,300 | 0,300 | harga tidak disentuh |
 | `abstain%` | 56,1 | 56,1 | tidak berubah |
 | `title_recall` | 0,364 | 0,346 | −5% |
 | `length_ok%` | 39,7 | 25,6 | **−35%** |
+
+Baris halusinasi dulu berbunyi `brand_strict%` 3,6 → 1,2 dan dibaca sebagai
+"3× lebih bersih". Metrik itu **gugur** — recall-nya 6,7% terhadap penilaian
+manusia. Penggantinya mencatat perbaikannya cuma 1,1 poin.
+
+Artinya perubahan kode ini **hampir tidak menyentuh halusinasi sama sekali**.
+Yang benar-benar diperbaikinya kategori: dari 36,4% ke 65,9% tepat. Itu klaim
+yang berdiri, dan lebih jujur daripada yang dulu ditulis.
 
 Lawan baseline 12B — angka baseline dari S3, sah dibandingkan karena
 `baseline_besar.py` tidak ikut berubah:
@@ -101,19 +109,20 @@ Lawan baseline 12B — angka baseline dari S3, sah dibandingkan karena
 | `title_recall` | **0,346** | 0,267 |
 | `category_valid%` | **100,0** | 0,0 |
 | `category_correct%` | **65,9** | 0,0 |
-| `brand_strict%` | **1,2** | 14,4 |
-| `spec_halluc%` | **1,0** | 24,1 |
-| `desc_ungrounded%` | **0,0** | 28,3 |
+| `ungrounded_words%` | **84,3** | 99,4 |
 | `price_logerr` | **0,300** | 0,788 |
 | `length_ok%` | 25,6 | **55,4** |
 
-Delapan dari sembilan kolom.
+Lima dari enam kolom.
 
-> **PERINGATAN.** Baris `brand_strict%`, `spec_halluc%`, dan
-> `desc_ungrounded%` di kedua tabel di atas **tidak sah**. Penilaian manusia
-> mengukur recall-nya 6,7%, 0,0%, dan 9,1% — ketiganya melewatkan hampir
-> seluruh halusinasi yang dilihat manusia. Jangan kutip selisihnya. Lihat
-> [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
+Tiga baris halusinasi lama (`brand_strict%`, `spec_halluc%`,
+`desc_ungrounded%`) dibuang dari kedua tabel — ketiganya gugur setelah
+penilaian manusia mengukur recall-nya 6,7%, 0,0%, dan 9,1%. Penggantinya
+`ungrounded_words%` (recall 93,3%, presisi 35%) mencatat selisih yang jauh
+lebih kecil: 84,3 lawan 99,4, bukan 1,2 lawan 14,4.
+
+Presisi 35% berarti angka mutlaknya tidak berarti "84% listing berhalusinasi";
+yang bermakna selisihnya. Lihat [`PENILAIAN_MANUSIA.md`](PENILAIAN_MANUSIA.md).
 
 ## Ongkosnya, dan kenapa tetap diambil
 
