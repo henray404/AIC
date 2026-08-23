@@ -23,6 +23,12 @@ jadi efeknya bisa dipisah — bukan disimpulkan dari perasaan.
 | **I** penjaga angka + bukti foto | **2,6%** | **0,0%** | 17,2% | 79,3% | **0,399** | **17,8** |
 | **M** I + penanganan deskripsi (**final**) | **2,6%** | **0,0%** | 13,3% | **82,8%** | 0,351 | 28,6 |
 
+> **Peringatan kebocoran.** Seluruh tabel ini dijalankan saat produk uji masih
+> ada di dalam indeks (`--eksklusi diri`, bawaan). Kolom `inti` dan `harga
+> meleset` karenanya lebih baik daripada yang sebenarnya — lihat Subbab 7. Kolom
+> `merek karangan` dan `spek_karang` tidak terpengaruh: keduanya tetap 0,0%
+> setelah kebocoran ditutup di ketiga tingkat.
+
 Kolom `spek_karang` — ukuran dan isi yang dikarang di judul — tuntas di I:
 **10,0% → 0,0%**. M menambahkan penanganan deskripsi dan jadi keadaan akhir kode;
 ia membayar 11 detik per produk untuk menghabiskan klaim berisiko dan merek
@@ -192,6 +198,76 @@ Dari 29 deskripsi: **24% perlu ditulis ulang, dan 10% masih melanggar setelah it
 sehingga kalimatnya dibuang. Lapis ketiga bukan hiasan — model kecil mengulang
 pelanggaran yang sama sepertiga waktunya.
 
+### 6. Pencarian berbasis kemiripan gambar — memperbaiki judul, merusak harga
+
+**Masalah.** Pencarian teks tidak bisa membedakan kelas harga dalam satu jenis
+barang, dan lebih buruk lagi ia bisa tersesat pada satu kata. Gaun Eprise
+Rp479.800 mendapat tetangga **parfum** — kata "Rose" dari keluaran tahap 1 cukup
+untuk menariknya — lalu disarankan Rp176.000.
+
+**Cara kerja.** `scripts/build_image_index.py` mengubah 28.093 gambar utama jadi
+vektor CLIP ViT-B-32: 7,5 menit di RTX 5050, indeks 26 MB. Satu gambar per
+produk, bukan seluruh galeri — tokopedia rata-rata 7 foto, dan memakai semuanya
+membuat produk itu 7x lebih mungkin terpilih jadi tetangga hanya karena ia
+difoto lebih banyak.
+
+**Ambang barang asing 0,80** diturunkan dari sebaran nyata, bukan dipilih bulat:
+produk yang punya padanan di katalog semuanya mendapat skor >=0,91, yang tidak
+punya jatuh di 0,67-0,77. Jurangnya lebar di sekitar 0,80. Di bawah ambang,
+konteks katalog **tidak dipakai sama sekali** — dari situ dulu lahir "Tas
+Longchamp" dan "teknologi altraze", merek pinjaman dari produk yang kebetulan
+mirip rupanya. Harganya juga tidak ditebak, melainkan ditandai perlu diisi
+penjual.
+
+**Pengaruh.** Kasus Eprise sembuh: tetangganya kini lini Eprise warna lain,
+saran Rp579.800. Skor `inti` naik **0,351 -> 0,550** pada mode gambar.
+
+**Dan harga memburuk: 2,6% -> 20,8% meleset pada mode gambar.** Bukan karena
+gambar buruk. Ia menghabiskan kesalahan besar (63% -> 0%) dan menambah kesalahan
+kecil — tetangga yang rupanya mirip belum tentu sekelas harga. Dua jenis
+kesalahan ini perlu penanganan terpisah, dan itu belum dikerjakan.
+
+### 7. Kebocoran indeks — angka di atas lebih baik daripada yang sebenarnya
+
+Ini temuan yang membatalkan sebagian tabel di dokumen ini, jadi ditulis lengkap.
+
+**Masalahnya.** Produk uji masih ada di dalam indeks saat ia diuji, dan begitu
+juga varian sewarna-lain. Gaun "Eprise Midi Hitam" menemukan "Eprise Midi Blue"
+lalu nyaris menyalinnya. Setiap angka yang lahir dari susunan itu tidak sah:
+sistemnya tidak sedang menyusun listing, ia sedang menyalin listing yang sudah
+ada.
+
+**Yang dikerjakan.** `--eksklusi` membuang dari indeks, per produk uji:
+
+| tingkat | yang dibuang |
+|---|---|
+| `diri` | hanya produk itu sendiri |
+| `lini` | + semua produk dengan kata pertama judul sama (74 produk Eprise) |
+| `kategori` | + seluruh kategorinya (7.537 produk `fashion_perawatan`) |
+
+Blokirnya diterapkan **sebelum** pengurutan skor, bukan menyaring top-k sesudah.
+Kalau seluruh kategori diblokir, menyaring belakangan bisa menyisakan nol
+tetangga tanpa peringatan apa pun.
+
+**Angka jujur** setelah kebocoran ditutup, 10 produk x 3 platform:
+
+| tingkat | dikenal | skor | inti | harga ditebak |
+|---|---|---|---|---|
+| `diri` | 7/10 | 0,93 | 0,474 | 21/30 |
+| **`lini`** | **5/10** | **0,81** | **0,269** | **15/30** |
+| `kategori` | 2/10 | 0,62 | 0,239 | 6/30 |
+
+Tingkat `lini` adalah angka yang mewakili pemakaian nyata: penjual mengunggah
+produk yang belum ada di katalog, tapi produk sejenis dari penjual lain ada.
+Tingkat `diri` adalah batas atas, dan itulah yang tanpa sadar dilaporkan tabel
+"Hasil pokok" di atas.
+
+**Yang tidak berubah:** halusinasi merek (sempit) dan spesifikasi karangan tetap
+**0,0% di ketiga tingkat**. Sistemnya menurun dengan cara mengaku tidak tahu —
+`dikenal` jatuh dari 7/10 ke 2/10, harga ditebak dari 21/30 ke 6/30 — bukan
+dengan mengarang. Klaim penjaga pasca-generasi berdiri tanpa bersandar pada
+kebocoran; klaim skor `inti` tidak.
+
 ---
 
 ## Dasar metodenya
@@ -209,26 +285,38 @@ pelanggaran yang sama sepertiga waktunya.
 
 1. **Sampel kecil.** 10 produk, 30 listing per konfigurasi. Cukup untuk efek besar
    (merek, panjang judul), tidak cukup untuk efek kecil (harga, `spek_karang`).
-2. **Metrik hanya menguji konsistensi internal.** "Merek karangan" diukur terhadap
+2. **Tabel "Hasil pokok" bocor.** Dijalankan dengan `--eksklusi diri`. Angka yang
+   mewakili pemakaian nyata ada di Subbab 7, tingkat `lini`.
+3. **Ketiga tabel besar di dokumen ini tidak sebanding satu sama lain.** `inti`
+   0,351 (konfigurasi M), 0,474 (eksklusi `diri`), dan 0,550 (mode gambar) lahir
+   dari tiga jalan dengan sakelar berbeda. Jangan menyandingkannya dalam satu
+   kalimat sebelum ada satu jalan bersih yang mengukur semuanya sekaligus —
+   itulah yang dikerjakan `paket_sesi1/sesi1.sh` pada n=100.
+4. **Metrik hanya menguji konsistensi internal.** "Merek karangan" diukur terhadap
    keluaran tahap 1 dan katalog — bukan terhadap isi foto. Kalau tahap penglihatan
    salah baca, metrik ini tidak akan tahu. Untuk itu perlu penilaian manusia.
 5. **Metrik bisa menyesatkan kalau definisinya sama dengan definisi penjaganya.**
    Ukuran lebar memberi nilai lebih baik kepada penjaga yang lebih galak, karena
    keduanya memakai definisi "tak berdasar" yang sama. Ketahuan hanya setelah
    keluarannya dibaca satu per satu. Selalu periksa contoh, jangan percaya tabel.
-3. **Kategori masih lemah.** Semua sebaran harga bersandar pada `kategori_umkm`
+6. **Kategori masih lemah.** Semua sebaran harga bersandar pada `kategori_umkm`
    yang 37,8% jatuh ke `lainnya`.
-4. **Kesalahan yang tersisa nyata.** Gaun Eprise asli Rp479.800 disarankan
+7. **Kesalahan yang tersisa nyata.** Gaun Eprise asli Rp479.800 disarankan
    Rp82rb–176rb karena tetangganya gaun murah; sepatu Zedruz Rp116.899 disarankan
    Rp75.000. Pencarian berbasis teks tidak bisa membedakan kelas harga dalam satu
-   jenis barang.
+   jenis barang. Mode gambar (Subbab 6) menyembuhkan kasus Eprise, tapi menukar
+   kesalahan besar dengan kesalahan kecil yang lebih sering — belum menang.
 
 ## Langkah berikutnya yang paling menjanjikan
 
-1. **Pencarian berbasis kemiripan gambar (CLIP).** Kesalahan harga tersisa berasal
-   dari tetangga yang jenisnya benar tapi kelasnya beda. Kemiripan visual bisa
-   memisahkan gaun premium dari gaun pasar; pencarian teks tidak bisa.
-2. **Perbaiki `kategori_umkm`.** Semua saran harga bertumpu di atasnya.
+1. **Pisahkan dua jenis kesalahan harga.** Mode gambar menghabiskan kesalahan
+   besar (63% -> 0%) dan menambah yang kecil, jadi angka gabungannya memburuk
+   (Subbab 6). Yang dibutuhkan: tetangga dipilih lewat rupa, kelas harganya
+   disaring lewat teks.
+2. **Jalankan `paket_sesi1/sesi1.sh`.** Satu jalan n=100 yang mengukur tiga
+   tingkat eksklusi dan baseline `gemma3:12b` sekaligus — sumber angka final,
+   menggantikan seluruh tabel n=10 di dokumen ini.
+3. **Perbaiki `kategori_umkm`.** Semua saran harga bertumpu di atasnya.
 3. **Uji dengan mata manusia**, 50–100 listing, untuk hal yang tidak bisa ditangkap
    metrik otomatis.
 
@@ -240,6 +328,16 @@ python scripts/build_lexicon.py
 python scripts/retrieve_pipeline.py --n 10 --platform all --iris 0:5  --panjangkan --keluaran data_drive/eval/B.jsonl
 python scripts/retrieve_pipeline.py --n 10 --platform all --iris 5:10 --panjangkan --keluaran data_drive/eval/B.jsonl
 python scripts/eval_listing.py data_drive/eval/A.jsonl data_drive/eval/B.jsonl
+```
+
+Subbab 6 (pencarian gambar) dan Subbab 7 (kebocoran indeks):
+
+```powershell
+python scripts/build_image_index.py
+python scripts/retrieve_pipeline.py --n 10 --platform all --panjangkan --mode-cari gambar   --keluaran data_drive/eval/gambar.jsonl
+python scripts/retrieve_pipeline.py --n 10 --platform all --panjangkan --eksklusi lini      --keluaran data_drive/eval/lini.jsonl
+python scripts/retrieve_pipeline.py --n 10 --platform all --panjangkan --eksklusi kategori  --keluaran data_drive/eval/kategori.jsonl
+python scripts/eval_listing.py data_drive/eval/lini.jsonl data_drive/eval/kategori.jsonl
 ```
 
 `--iris` memecah satu sampel jadi beberapa jalan tanpa mengubah isinya: seed sama,
