@@ -33,6 +33,11 @@ pipeline    299 nilai kategori unik, hanya 41,6% sah
 baseline    344 nilai unik, 0,0% sah
 ```
 
+Catatan penting untuk membaca `category_correct%`: sebagian "kesalahan" yang
+dihitung ternyata label katalognya yang keliru, bukan sistemnya. Analisis
+lengkapnya di [`CACAT_LABEL_KATEGORI.md`](CACAT_LABEL_KATEGORI.md) — angka 65,9%
+adalah batas bawah.
+
 `gemma3:12b` tidak pernah sekali pun menghasilkan kategori yang ada di
 taksonomi — ia mengarang taksonomi Tokopedia sendiri: "Perawatan Wajah",
 "Komputer & Aksesoris", "Pakaian Pria > Kemeja".
