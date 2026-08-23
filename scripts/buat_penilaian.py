@@ -49,11 +49,19 @@ for _aliran in (sys.stdout, sys.stderr):
 PROJECT = Path(__file__).resolve().parent.parent
 KELUARAN = PROJECT / "penilaian" / "penilaian.html"
 
-# label ini masuk ke berkas hasil, tidak pernah ke layar
+# Label ini masuk ke berkas hasil, tidak pernah ke layar.
+#
+# Student SENGAJA tidak ikut. Ia tidak pernah menghasilkan kategori maupun
+# harga, jadi barisnya tampil sebagai "kategori: - . tanpa harga" -- penanda
+# yang membuat penilai bisa mengenalinya seketika, dan penilaian butanya
+# batal. Pipeline dan baseline sama-sama punya keempat kolom, jadi
+# benar-benar tak terbedakan.
+#
+# Student tetap perlu dinilai manusia, tapi lewat ronde terpisah yang hanya
+# menanyakan judul dan deskripsi -- dua hal yang memang ia hasilkan.
 SUMBER = {
     "pipeline": PROJECT / "hasil_sesi2" / "S4_bersih.jsonl",
     "baseline12b": PROJECT / "hasil_sesi2" / "S3_baseline_12b.jsonl",
-    "murid_vlm": PROJECT / "hasil_sesi2" / "murid_vlm.jsonl",
 }
 
 
@@ -100,7 +108,7 @@ def foto_base64(path: Path, sisi: int = 560) -> str | None:
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--n", type=int, default=17,
+    ap.add_argument("--n", type=int, default=25,
                     help="jumlah produk; tiap produk menyumbang 1 listing per sistem")
     ap.add_argument("--seed", type=int, default=11)
     args = ap.parse_args()

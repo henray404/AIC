@@ -27,7 +27,7 @@ Kemajuanmu tersimpan otomatis di browser, jadi boleh berhenti dan lanjut nanti.
 Tapi **pakai browser dan komputer yang sama**, dan jangan bersihkan data situs
 di tengah jalan — kemajuannya ikut terhapus.
 
-51 listing, satu per layar. Foto di kiri, listing di kanan.
+50 listing, satu per layar. Foto di kiri, listing di kanan.
 
 ## Aturan utama
 
