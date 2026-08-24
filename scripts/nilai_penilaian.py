@@ -94,10 +94,23 @@ def main():
     import eval_listing as ev
 
     baris = json.loads(Path(args.hasil).read_text(encoding="utf-8"))
+
+    # Berkas dari HTML versi lama memakai id "kategori" untuk jawaban penilai,
+    # dan itu MENIMPA kolom kategori listing saat diekspor -- kategori yang
+    # ditulis sistem hilang. Dikenali dari tidak adanya kunci kategori_nilai.
+    versi_lama = bool(baris) and "kategori_nilai" not in baris[0]
+    if versi_lama:
+        for b in baris:
+            b["kategori_nilai"] = b.pop("kategori", None)
+
     lengkap = [b for b in baris if b.get("layak")]
     print(f"{len(lengkap)} dari {len(baris)} listing sudah dinilai")
     if not lengkap:
         sys.exit("belum ada yang dinilai")
+    if versi_lama:
+        print("\n  PERINGATAN: berkas dari HTML versi lama.")
+        print("  Jawaban kategori terbaca, tapi kategori yang DITULIS SISTEM")
+        print("  hilang tertimpa saat diekspor. Bagian 3 dilewati.")
 
     # ---------------------------------------------------- 1. penilaian manusia
     per_sistem: dict[str, list] = {}
@@ -173,6 +186,11 @@ def main():
     print("  tetap terlihat tinggi kalau halusinasinya memang jarang.")
 
     # ------------------------------------------------ 3. mutu label kategori
+    if versi_lama:
+        print("\n  (bagian 3 dilewati: kategori yang ditulis sistem tidak"
+              " tersimpan di berkas versi lama)")
+        return
+
     print("\n" + "=" * 70)
     print("3. MUTU LABEL KATALOG")
     print("=" * 70)
