@@ -173,7 +173,7 @@ Detail lengkap: lihat [MODEL_HARGA.md](file:///Users/syahribanun/Documents/KULIA
 │  ├──────────────┤                              │
 │  │ PPh Final    │ ← 0,5% (otomatis)            │
 │  ├──────────────┤                              │
-│  │ PPN (jk PKP) │ ← 12% (otomatis, opsional)  │
+│  │ PPN (jk PKP) │ ← 11% efektif (opsional)    │
 │  ├──────────────┤                              │
 │  │   MARGIN     │ ← 10%–200% (per kategori)    │
 │  └──────────────┘                              │
@@ -204,7 +204,7 @@ Dari eksperimen terdokumentasi di `docs/OPTIMASI.md`:
 | 2 | Pipeline foto → listing | ✅ Selesai | — |
 | 3 | Optimasi (merek, gaya, harga) | ✅ Selesai | — |
 | 4 | **Model harga berbasis HPP** | 📐 **Draft selesai** | Tinggi |
-| 5 | Implementasi `pricing_engine.py` | ⬜ Belum | Tinggi |
+| 5 | Implementasi `pricing_engine.py` | ✅ Selesai | — |
 | 6 | Perbaikan `kategori_umkm` | ⬜ Belum | Tinggi |
 | 7 | CLIP image similarity | ⬜ Belum | Sedang |
 | 8 | Frontend/UI | ⬜ Belum | Rendah |

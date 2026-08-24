@@ -33,54 +33,153 @@ pembuatan barangnya, tapi tidak tahu:
 
 ## 2. Komponen Pembentuk Harga
 
-### 2.1 Pajak UMKM (Diverifikasi — PP 20/2026 & UU HPP)
+### 2.1 Pajak UMKM (Diverifikasi — PP 20/2026, PMK 37/2025 & UU HPP)
 
 | Komponen | Tarif | Ketentuan | Dasar hukum |
 |---|---|---|---|
 | **PPh Final UMKM** | **0,5%** dari omzet bruto | Omzet ≤ Rp4,8M/tahun. Berlaku untuk WP Orang Pribadi, PT Perorangan, dan Koperasi. **Tanpa batas waktu** untuk OP & PT Perorangan. | PP 20/2026 (merevisi PP 55/2022) |
 | **Pembebasan PPh** | **0%** (bebas) | Omzet s.d. **Rp500 juta** pertama dalam setahun **tidak dikenai pajak** | PP 20/2026 Pasal 7 |
-| **PPN** | **12%** | Wajib hanya kalau sudah PKP (omzet > Rp4,8M/tahun). Sebagian besar UMKM pemula **belum PKP** → **tidak kena PPN**. | UU HPP No. 7/2021 |
+| **PPh Pasal 22 marketplace** | **0,5%** peredaran bruto (di luar PPN/PPnBM) | **Dipungut otomatis oleh platform**, bukan disetor sendiri. Tidak dipungut selama omzet berjalan ≤ Rp500 juta; penjual wajib mengirim surat pernyataan ke platform paling lambat akhir bulan saat omzet melewati ambang itu. Nilainya jadi kredit atas PPh Final di baris pertama — **bukan beban tambahan**. | PMK 37/2025 |
+| **PPN** | nominal **12%**, **efektif 11%** untuk barang non-mewah | Tarif 12% dikalikan DPP nilai lain 11/12 dari harga jual → efektif 11%. Barang tergolong mewah tetap kena 12% penuh di 2026. Wajib hanya kalau sudah PKP (omzet > Rp4,8M/tahun); sebagian besar UMKM pemula **belum PKP** → **tidak kena PPN**. | UU HPP No. 7/2021 + PMK 131/2024 |
 
 > **Untuk UMKM pemula dengan omzet < Rp500 juta/tahun: pajak = 0%.**
 > Baru mulai bayar 0,5% setelah omzet melewati Rp500 juta. Ini artinya untuk
 > kebanyakan user target kita, pajak bukan faktor signifikan di awal.
 
+**Ketiga platform yang dimodelkan di sini semuanya sudah ditunjuk sebagai pemungut
+PPh Pasal 22.** Penunjukan mencakup empat penyelenggara PMSE: Blibli (PT Global
+Digital Niaga Tbk), Shopee (PT Shopee International Indonesia), Tokopedia
+(PT Tokopedia), dan Lazada (PT Ecart Webportal Indonesia). Konsekuensinya untuk
+model: begitu omzet penjual melewati Rp500 juta, potongan 0,5% terjadi di sisi
+platform sebelum dana cair — bukan setoran mandiri di akhir bulan.
+
+> `[BELUM DIVERIFIKASI]` Ada sumber sekunder yang menyatakan dasar pengenaan PPh
+> Pasal 22 adalah **harga sebelum diskon**, berbeda dari biaya admin platform yang
+> memakai harga netto (setelah diskon ditanggung penjual). Kalau benar, potongan
+> pajaknya sedikit lebih besar dari 0,5% × harga netto. Belum ditemukan di teks
+> PMK 37/2025 sendiri — jangan dipakai di paper sampai terverifikasi.
+
 ### 2.2 Biaya Platform (Diverifikasi — Data Mei–Agustus 2026)
 
-#### Tokopedia (per 18 Mei 2026, terintegrasi TikTok Shop)
+#### Tokopedia non-Mall (sumber primer — berlaku 20 Februari 2025)
 
-| Kategori | Komisi Dinamis | Catatan |
+Ini satu-satunya tarif platform di dokumen ini yang punya **sumber primer
+lengkap**: PDF resmi *"Tokopedia non Mall Tarif - Mulai 20 Februari 2025"*,
+3.779 baris tarif atas 43 kategori sampai tingkat sub sub-kategori. PDF-nya
+dokumen pihak ketiga dan tidak di-commit; hasil parse-nya ada di
+`docs/tarif_tokopedia_nonmall.csv` dan dibangkitkan ulang dengan:
+
+```bash
+python scripts/parse_tarif_tokopedia.py --ringkas
+python scripts/parse_tarif_tokopedia.py --selfcheck
+```
+
+**Aturan diskon.** Sejak 16 September 2024, setiap subkategori bertarif 10,00%
+mendapat diskon komisi 20%, sehingga tarif efektifnya **8,00%**. Seluruh angka
+"efektif" di bawah sudah memperhitungkan ini.
+
+Tarif tingkat kategori (43 kategori, dipilih yang relevan):
+
+| Kategori Tokopedia | Tarif | Efektif |
 |---|---|---|
-| Elektronik & Gadget | 3%–4% | Telepon 3%, Komputer 4% |
-| Fashion & Aksesori | 7%–8,5% | Pakaian 8%, Aksesori 7,5% |
-| Kecantikan & Perawatan | 7% | |
-| Kebutuhan Harian (FMCG) | 6,5% | |
-| Rumah Tangga & Dapur | 8% | |
-| Mainan & Hobi | 8% | |
-| Otomotif | 6,5%–7,5% | |
-| **Biaya tambahan** | | |
-| Biaya Pemrosesan Order | Rp1.250/pesanan | Flat per pesanan berhasil |
-| Biaya Pre-Order | +3% | Kalau pakai fitur pre-order |
-| Fee Cap | Maks Rp80.000/item | Per Juli 2026 (sebelumnya Rp650.000) |
+| Elektronik | 4,25% | 4,25% |
+| Handphone & Tablet | 4,25% | 4,25% |
+| Logam Mulia | 4,25% | 4,25% |
+| Gaming | 5,50% | 5,50% |
+| Dapur | 5,75% | 5,75% |
+| Komputer & Laptop | 5,75% | 5,75% |
+| Audio, Kamera & Elektronik Lainnya | 6,79% | 6,79% |
+| Ibu & Bayi | 7,14% | 7,14% |
+| Fashion Anak & Bayi | 7,40% | 7,40% |
+| Kesehatan | 7,50% | 7,50% |
+| Makanan & Minuman | 7,50% | 7,50% |
+| Properti | 7,50% | 7,50% |
+| Fashion Pria | 7,75% | 7,75% |
+| Rumah Tangga | 7,95% | 7,95% |
+| Buku, Fashion Muslim, Fashion Wanita, Kecantikan, Office & Stationery, Olahraga, Otomotif, Perawatan Tubuh, Perlengkapan Pesta, Pertukangan, Tiket/Travel/Voucher | 10,00% | **8,00%** |
+| Sayur & Buah Segar, Daging & Seafood, Beras & Makanan Kering, Telur & Olahan Susu, Bumbu Masakan, Snack & Es Krim, Minuman, Mie/Pasta/Bihun, Makanan Beku & Olahan, Makanan Sarapan | 0,00% | 0,00% |
 
-> Tarif sudah termasuk pajak. Diskon komisi tersedia via program GMV Max / Growth Xtra.
+**Tarif wakil per `kategori_umkm`** — median tarif efektif baris daun (baris yang
+punya sub sub-kategori), yaitu tarif yang benar-benar kena ke satu produk:
+
+| `kategori_umkm` | Median | Min | Max | Baris daun |
+|---|---|---|---|---|
+| `bumbu_masak` | **0,00%** | 0,00% | 0,00% | 65 |
+| `pokok_tani` | **0,00%** | 0,00% | 0,00% | 188 |
+| `camilan_olahan` | **5,75%** | 0,00% | 8,00% | 160 |
+| `makanan_minuman` | **5,75%** | 0,00% | 8,00% | 232 |
+| `elektronik_gadget` | **5,75%** | 0,00% | 8,00% | 341 |
+| `minuman_herbal` | **7,50%** | 0,00% | 8,00% | 110 |
+| `fashion_perawatan` | **8,00%** | 0,00% | 8,00% | 596 |
+| `kriya_rumah` | **8,00%** | 0,00% | 8,00% | 186 |
+| `skincare_kecantikan` | **8,00%** | 0,00% | 8,00% | 223 |
+| `dapur_rumah` | **8,00%** | 0,00% | 8,00% | 314 |
+| `kesehatan_olahraga` | **8,00%** | 5,75% | 8,00% | 316 |
+| `lainnya` | **8,00%** | 0,00% | 8,00% | 3.276 |
+
+Pemetaan kategori kami → kategori Tokopedia adalah **penilaian manusia, bukan
+hasil pengukuran**; isinya terbuka di `PETA_KATEGORI` pada
+`scripts/parse_tarif_tokopedia.py` supaya bisa diperdebatkan.
+
+Median dihitung dari baris daun saja, bukan baris agregat. Alasannya: sebagian
+baris agregat bernilai 0,00% hanya karena selnya kosong di PDF — contoh
+"Buku > Buku Ekonomi & Bisnis" tertulis 0,00% padahal seluruh anaknya 10,00%.
+Pada kategori barang segar nol itu sungguhan, karena seluruh pohon sampai daun
+bernilai 0,00%.
+
+> **Koreksi Agustus 2026 — angka lama salah cukup jauh.** Versi doc sebelumnya
+> menulis tarif Tokopedia "per 18 Mei 2026" bersumber dari artikel sekunder:
+> elektronik 3%–4%, fashion 7%–8,5%, FMCG 6,5%, kecantikan 7%. Terhadap PDF
+> resmi, `elektronik_gadget` seharusnya **5,75% bukan 3,5%**,
+> `kesehatan_olahraga` **8,00% bukan 6,5%**, `skincare_kecantikan` **8,00%
+> bukan 7,0%**, `minuman_herbal` **7,50% bukan 6,5%**, dan `lainnya` — 37,8%
+> katalog — **8,00% bukan 6,5%**. Tanggal berlaku "18 Mei 2026" juga tidak
+> punya sumber; yang bisa diverifikasi adalah 20 Februari 2025.
+
+> `[BELUM DIVERIFIKASI]` **Biaya Pemrosesan Order Rp1.250/pesanan**, **fee cap
+> Rp80.000/item**, dan **biaya pre-order +3%** tidak ada di PDF tarif dan belum
+> ditemukan sumber primernya. Ketiganya masih terpasang di
+> `scripts/pricing_engine.py` sebagai warisan versi lama — jangan dikutip di
+> paper sebelum diverifikasi.
+
+> `[PERLU KEPUTUSAN]` **Tarif 0,00% untuk pangan segar.** PDF 20 Februari 2025
+> memberi 0,00% pada Sayur & Buah Segar, Bumbu Masakan, Daging & Seafood, dan
+> sejenisnya — sampai ke daun. Tapi ringkasan Seller Center yang dibaca
+> 24 Agustus 2026 menyebut lantai tarif 1,00% (Elektronik & Lainnya) dan 4,25%
+> (Fashion, FMCG, Gaya Hidup), tanpa satu pun 0%. Kemungkinan besar tarif 0%
+> sudah dicabut setelah Februari 2025. Model saat ini **tidak memakai 0%**:
+> `KE_TARIF` memetakan `bumbu_masak`, `camilan_olahan`, dan `pokok_tani` ke
+> tarif `makanan_minuman` 5,75%. Itu **melebih-lebihkan biaya** untuk pangan
+> segar, dan arah kesalahannya aman — BEP jadi lebih tinggi, penjual tidak
+> terdorong menetapkan harga terlalu rendah. Perlu diputuskan sebelum
+> pengumpulan: pertahankan 5,75%, atau pisahkan ketiganya begitu tarif pangan
+> segar yang berlaku sekarang terverifikasi.
 
 #### Shopee (per 2 Mei 2026)
 
-| Kategori Shopee | Biaya Admin (Star/Star+) | Biaya Admin (Reguler, ~20% lebih tinggi) |
+| Kategori Shopee | Biaya Admin (Non-Star, Star & Star+) | Shopee Mall |
 |---|---|---|
-| **Kat. A** — Fashion, F&B, Perlengkapan Rumah | 10% | ~12% |
-| **Kat. B** — Aksesori, Tas, Skincare, Perlengkapan Bayi | 9%–9,5% | ~11% |
-| **Kat. C** — Susu Formula, Suplemen, Perlengkapan Mandi Bayi | 6,5%–6,75% | ~8% |
-| **Kat. D** — Elektronik (Laptop, HP, Kamera, Audio) | 5,25%–7,5% | ~7%–9% |
-| **Kat. E** — Barang Mewah, Logam Mulia | 4,25% | ~5% |
-| **Kat. Khusus** — E-money, Voucher, Tiket | 2,5% | ~3% |
+| **Kat. A** — Fashion, F&B, Perlengkapan Rumah | 10% | 10,2%–11,7% |
+| **Kat. B** — Aksesori, Tas, Skincare, Perlengkapan Bayi | 9%–9,5% | belum diverifikasi |
+| **Kat. C** — Susu Formula, Suplemen, Perlengkapan Mandi Bayi | 6,5%–6,75% | belum diverifikasi |
+| **Kat. D** — Elektronik (Laptop, HP, Kamera, Audio) | 5,25% | 4,2%–4,7% |
+| **Kat. E** — Barang Mewah, Logam Mulia | 4,25% | 3,2% |
+| **Kat. Khusus** — E-money, Voucher, Tiket | 2,5% | — |
+| Otomotif (mobil/motor) — tarif terendah | 2,5% | — |
 | **Biaya tambahan** | | |
 | Biaya Proses Pesanan | Rp1.250/pesanan | |
 | Gratis Ongkir XTRA | 4%–9% (tergantung kategori & ukuran) | Opsional tapi sangat mempengaruhi visibilitas |
 | Biaya Pre-Order | +3% | |
 
 > Biaya admin sudah termasuk PPN. Penjual baru bisa dapat insentif bebas biaya untuk 500–1.000 pesanan pertama.
+> Rumus resmi: `(harga asli − diskon ditanggung penjual) × %`, ongkos kirim dikecualikan.
+> Shopee Mall kena tambahan **payment fee 1,8%** di luar biaya admin.
+
+> **Revisi Agustus 2026.** Versi doc sebelumnya menulis tarif Seller Reguler
+> “~20% lebih tinggi” dari Star/Star+. Dua sumber tarif 2026 menyatakan
+> persentasenya **identik** untuk Non-Star, Star, dan Star+ (rentang 2,5%–10%);
+> kolom Reguler yang lama dihapus. Kat. D juga dikoreksi dari “5,25%–7,5%” ke
+> **5,25%** — batas atas 7,5% tidak ditemukan di sumber mana pun.
 
 #### Blibli (2025–2026, Seller Regular)
 
@@ -97,39 +196,60 @@ pembuatan barangnya, tapi tidak tahu:
 
 Untuk perhitungan, kita pakai **total efektif** (komisi + gratis ongkir + biaya proses):
 
-| Kategori (kami) | Tokopedia | Shopee (Star) | Blibli |
+| Kategori (kami) | Tokopedia | Shopee (semua tier) | Blibli |
 |---|---|---|---|
 | `fashion_perawatan` | **8% + Rp1.250** | **10% + 6% ongkir + Rp1.250** | **10%** |
-| `elektronik_gadget` | **3,5% + Rp1.250** | **6,5% + 5% ongkir + Rp1.250** | **4,25%** |
-| `makanan_minuman` | **6,5% + Rp1.250** | **10% + 6% ongkir + Rp1.250** | **5,75%** |
-| `skincare_kecantikan` | **7% + Rp1.250** | **9,5% + 6% ongkir + Rp1.250** | **8%** |
+| `elektronik_gadget` | **5,75% + Rp1.250** | **6,5% + 5% ongkir + Rp1.250** | **4,25%** |
+| `makanan_minuman` | **5,75% + Rp1.250** | **10% + 6% ongkir + Rp1.250** | **5,75%** |
+| `skincare_kecantikan` | **8% + Rp1.250** | **9,5% + 6% ongkir + Rp1.250** | **8%** |
 | `dapur_rumah` | **8% + Rp1.250** | **10% + 6% ongkir + Rp1.250** | **7,5%** |
-| `kesehatan_olahraga` | **6,5% + Rp1.250** | **9% + 5% ongkir + Rp1.250** | **7,5%** |
+| `kesehatan_olahraga` | **8% + Rp1.250** | **9% + 5% ongkir + Rp1.250** | **7,5%** |
 | `kriya_rumah` | **8% + Rp1.250** | **10% + 6% ongkir + Rp1.250** | **8%** |
 
 > **Shopee paling mahal** karena gratis ongkir XTRA menambah 4–9% di atas biaya admin.
 > **Tokopedia** fee cap Rp80.000/item menguntungkan produk mahal.
 > **Blibli** paling sederhana, tapi traffic lebih rendah.
 
-### 2.3 Faktor Sekunder (Pengaruh Signifikan)
+### 2.3 Faktor di luar biaya — yang sudah dimodelkan
 
-| Faktor | Pengaruh | Cara menentukan |
+Tabel ini dan Subbab 2.4 dipisah menurut satu kriteria saja: **ada atau tidak
+implementasinya di `scripts/pricing_engine.py`.** Sebelumnya keduanya bercampur
+dalam tabel "Faktor Sekunder / Tersier", yang membuat doc menjanjikan lebih
+banyak daripada yang dikerjakan kode.
+
+| Faktor | Pengaruh | Implementasi |
 |---|---|---|
-| **Harga kompetitor** | Benchmark utama: kalau terlalu mahal tidak laku, kalau terlalu murah rugi | Dari dataset 28.443 produk (TF-IDF similarity search) |
-| **Kategori barang** | Margin wajar berbeda per kategori (fashion 50–200%, F&B 30–100%) | Dari foto → VLM → pencarian katalog |
-| **Kondisi barang** | Baru vs bekas mempengaruhi valuasi | Dari specs/VLM |
-| **Brand/merek** | Barang bermerek bisa premium, tanpa merek harus kompetitif | Dari foto + lexicon |
-| **Tren permintaan** | Produk trending bisa lebih mahal | Dari sold_count data |
+| **Harga kompetitor** | Benchmark utama: terlalu mahal tidak laku, terlalu murah rugi | Pencarian TF-IDF atas 28.443 produk → P25 / median / P75 → zona BAGUS/WAJAR/KETAT/BAHAYA (`tentukan_zona()`) |
+| **Kategori barang** | Margin wajar berbeda per kategori | `MARGIN`, sembilan kategori dengan batas lo/mid/hi. Kategori ditebak dari modus `kategori_umkm` tetangga terdekat |
+| **Satuan grosir** | Modal per lusin/kodi/dus harus jadi HPP per unit jual | `KONVERSI_SATUAN` + `PricingRequest.hpp_per_unit`; jalur langsung "modal ini jadi N unit" lewat `jumlah_unit_jual` / `hitung_hpp_per_unit()` |
+| **Klarifikasi satuan** (§3.4) | Sistem tidak boleh menebak "modal Rp50.000 itu untuk apa" | `UNIT_LAZIM` + `pertanyaan_unit()`; kalau penjual diam, mundur ke asumsi teraman 1 unit jual |
+| **Variasi produk** (§3.5) | Warna harga sama; ukuran/isi proporsional; grade tidak proporsional | `hitung_varian()` → `VariantPrice`. Ukuran lewat `ANCHOR_UKURAN` (diskon volume) dan `ATURAN_UKURAN_FASHION` (XS–XL sama, XXL+ markup); grade lewat `hpp_per_grade` kalau ada, `RASIO_GRADE` kalau tidak — dan varian yang diestimasi ditandai |
+| **Variasi lazim di kategori** | Menyarankan varian sebelum penjual bertanya | `deteksi_variasi_katalog()` atas judul tetangga. **Bukan** dari kolom `specs` seperti diandaikan §3.5 — kolom itu tidak ada di `merged.parquet` |
+| **Biaya packing & produksi** | Bubble wrap, kardus, stiker, upah olah | Input penjual, masuk ke HPP (`biaya_packing`, `biaya_produksi`) |
+| **Psikologi harga** | Rp49.900 terasa lebih murah dari Rp50.000 | `bulatkan()`, ambang berbeda per rentang harga |
 
-### 2.4 Faktor Tersier (Pengaruh Kecil tapi Ada)
+### 2.4 Faktor di luar biaya — yang BELUM dimodelkan
 
-| Faktor | Contoh |
-|---|---|
-| Ongkos kirim | Barang berat/besar perlu harga lebih tinggi untuk menutup subsidi ongkir |
-| Biaya packing | Bubble wrap, kardus, stiker, dll |
-| Return rate | Kategori fashion return-nya lebih tinggi |
-| Psikologi harga | Rp49.900 vs Rp50.000 — yang pertama "terasa" lebih murah |
-| Musim/seasonal | Harga payung naik saat hujan; harga AC naik saat kemarau |
+Kelimanya nyata memengaruhi harga, tapi **tidak ada satu baris pun** di
+`scripts/pricing_engine.py` yang membacanya. Ditulis di sini supaya tidak
+terbaca sebagai fitur yang sudah ada, dan supaya bisa langsung dipakai mengisi
+bagian limitasi paper.
+
+| Faktor | Kenapa belum | Yang dibutuhkan kalau mau dikerjakan |
+|---|---|---|
+| **Kondisi barang** (baru vs bekas) | Tidak ada field kondisi di `PricingRequest`; dataset hasil scraping tidak punya label kondisi yang bersih | Field input dari penjual, plus faktor pengali valuasi |
+| **Brand/merek** | Barang bermerek bisa premium, tanpa merek harus kompetitif — tapi engine tidak membaca merek sama sekali. `scripts/build_lexicon.py` ada, tidak dipanggil dari sini | Lexicon merek + keputusan seberapa besar premiumnya |
+| **Tren permintaan** | Kolom `sold_count` tidak pernah dibaca `pricing_engine.py` | Definisi "trending" yang bisa diukur, bukan taksiran |
+| **Ongkos kirim menurut berat/dimensi** | Tidak ada field berat. `gratis_ongkir_pct` hanya persentase program platform, bukan fungsi dari berat barang | Berat & dimensi sebagai input, plus tabel tarif kurir |
+| **Return rate** | Fashion returnnya lebih tinggi dari FMCG, tapi tidak ada angkanya di kode maupun di dataset | Data retur per kategori — tidak ada di data scraping |
+| **Musim/seasonal** | Harga payung naik saat hujan, AC saat kemarau | Data harga deret waktu; dataset kita satu snapshot, bukan runtun waktu |
+
+> Satu asumsi tersembunyi yang perlu ikut ditulis di limitasi: **biaya proses
+> Rp1.250 itu per pesanan, bukan per item**, tapi engine menambahkannya ke HPP
+> per unit. Untuk pesanan berisi tiga barang, model menghitung Rp3.750 padahal
+> yang ditagih Rp1.250. Arah kesalahannya aman — BEP jadi lebih tinggi, penjual
+> tidak terdorong menetapkan harga terlalu rendah — tapi tetap asumsi, bukan
+> fakta.
 
 ---
 
@@ -157,6 +277,14 @@ Harga_Minimum   = 50.000 / (1 - 0.125) = 50.000 / 0.875 = Rp57.143
 ```
 
 > Ini adalah **harga BEP** (break-even point). Di bawah ini, penjual RUGI.
+
+> **Catatan mekanisme pajak (PMK 37/2025).** Komponen `Pajak%` di atas sekarang
+> **dipungut di muka oleh marketplace**, bukan disetor sendiri oleh penjual.
+> Besarannya tidak berubah (0,5% saat omzet > Rp500 juta) dan nilainya menjadi
+> kredit atas PPh Final, jadi `Harga_Minimum` **tidak bergeser**. Yang berubah
+> adalah arus kas: potongan sudah terjadi sebelum dana masuk ke rekening penjual.
+> Ambang Rp500 juta yang dipakai model berlaku sama untuk kedua rezim, sehingga
+> logika di `scripts/pricing_engine.py` tidak perlu diubah.
 
 ### 3.2 Formula Harga Jual dengan Margin
 
@@ -815,24 +943,25 @@ class PricingResult:
 ```python
 BIAYA_PLATFORM = {
     "tokopedia": {
-        # Komisi Dinamis per 18 Mei 2026 (sudah termasuk pajak)
+        # Median tarif efektif baris daun, PDF resmi 20 Februari 2025.
+        # Lahirkan ulang: python scripts/parse_tarif_tokopedia.py --ringkas
         "komisi_pct": {
-            "fashion_perawatan":   8.0,   # Pakaian 8%, Aksesori 7,5%
-            "elektronik_gadget":   3.5,   # Telepon 3%, Komputer 4%
-            "makanan_minuman":     6.5,   # FMCG 6,5%
-            "skincare_kecantikan": 7.0,   # Kecantikan & Perawatan 7%
-            "dapur_rumah":         8.0,   # Perlengkapan Rumah 8%
-            "kesehatan_olahraga":  6.5,   # 
-            "kriya_rumah":         8.0,   # Hobi 8%
-            "minuman_herbal":      6.5,   # FMCG 6,5%
-            "lainnya":             6.5,
+            "fashion_perawatan":   8.0,   # Fashion + Kecantikan + Perawatan Tubuh
+            "elektronik_gadget":   5.75,  # Elektronik, HP, Komputer, Audio/Kamera
+            "makanan_minuman":     5.75,  # Makanan & Minuman + Snack + Minuman
+            "skincare_kecantikan": 8.0,   # Kecantikan + Perawatan Tubuh
+            "dapur_rumah":         8.0,   # Dapur + Rumah Tangga
+            "kesehatan_olahraga":  8.0,   # Kesehatan + Olahraga
+            "kriya_rumah":         8.0,   # Rumah Tangga
+            "minuman_herbal":      7.5,   # Minuman + Kesehatan
+            "lainnya":             8.0,   # median seluruh 3.276 baris daun
         },
         "gratis_ongkir_pct": 0.0,   # Sudah termasuk di komisi dinamis
-        "biaya_proses": 1250,        # Rp1.250/pesanan (flat)
-        "fee_cap": 80_000,           # Maks komisi per item (Juli 2026)
+        "biaya_proses": 1250,        # [BELUM DIVERIFIKASI] tidak ada di PDF tarif
+        "fee_cap": 80_000,           # [BELUM DIVERIFIKASI] tidak ada di PDF tarif
     },
     "shopee": {
-        # Biaya Admin Star/Star+ per 2 Mei 2026
+        # Biaya Admin 2026 — sama untuk Non-Star, Star, dan Star+
         "komisi_pct": {
             "fashion_perawatan":  10.0,   # Kat. A
             "elektronik_gadget":   6.5,   # Kat. D (5,25%-7,5%)
@@ -1239,10 +1368,17 @@ User melihat:
 ## 10. Langkah Selanjutnya
 
 ### Prioritas Tinggi
-1. **Implementasi `pricing_engine.py`** — modul baru di `scripts/` yang
-   mengimplementasikan formula market-first di atas
-2. **Integrasi ke `retrieve_pipeline.py`** — tambahkan parameter `--hpp` ke CLI
+1. ~~**Implementasi `pricing_engine.py`**~~ — ✅ Selesai. Market-first (§3.3),
+   zona BAHAYA (§3.3.1), satuan modal (§3.4), dan variasi produk (§3.5) semuanya
+   sudah ada di kode dan diikat oleh `tests/test_pricing.py`.
+2. ~~**Integrasi ke `retrieve_pipeline.py`**~~ — ✅ Selesai lewat `--hpp`
 3. **Perbaiki `kategori_umkm`** — 37,8% `lainnya` merusak semua estimasi margin
+4. **Ukur konstanta yang masih ditebak.** Tiga tabel sekarang menentukan harga
+   tanpa dasar terukur: `MARGIN_DEFAULT` (§5.4), `ANCHOR_UKURAN` dan
+   `RASIO_GRADE` (§3.5). Ketiganya disalin dari doc ini, yang menyebutnya
+   "diturunkan dari pola marketplace" tanpa menunjukkan pengukurannya. Selama
+   itu belum dibereskan, klaim "deterministik" hanya berlaku untuk *cara*
+   hitungnya — lihat §4.2 dan `RISET_MODEL_HARGA.md` §4.1.
 
 ### Prioritas Sedang
 4. **CLIP-based similarity search** — pencarian berbasis gambar, bukan teks.
@@ -1270,14 +1406,20 @@ User melihat:
 - **PP 20/2026** — Perubahan atas PP 55/2022. PPh Final UMKM 0,5% tanpa batas waktu
   untuk WP OP dan PT Perorangan. Omzet ≤ Rp500 juta bebas pajak. Sumber: pajak.go.id,
   ortax.org, umkm.go.id
-- **UU HPP No. 7 Tahun 2021** — Tarif PPN 12%, berlaku untuk PKP (omzet > Rp4,8M)
+- **UU HPP No. 7 Tahun 2021 + PMK 131/2024** — PPN nominal 12%, efektif 11% untuk
+  barang non-mewah lewat DPP nilai lain 11/12. Berlaku untuk PKP (omzet > Rp4,8M)
+- **PMK 37/2025** — Marketplace ditunjuk memungut PPh Pasal 22 0,5% di muka; empat
+  penyelenggara ditunjuk: Blibli, Shopee, Tokopedia, Lazada. Sumber: pajak.go.id
 
-### Biaya Platform (Diverifikasi Agustus 2026)
-- **Tokopedia:** Komisi Dinamis per 18 Mei 2026. Fashion 8%, Elektronik 3-4%, FMCG 6,5%.
-  Fee cap Rp80.000/item (Juli 2026). Biaya proses Rp1.250/pesanan.
-- **Shopee:** Biaya Admin Star/Star+ per 2 Mei 2026. Kat. A (Fashion, F&B) 10%,
-  Kat. B (Skincare, Aksesori) 9-9,5%, Kat. D (Elektronik) 5,25-7,5%. Gratis Ongkir
-  XTRA 4-9%. Biaya proses Rp1.250/pesanan.
+### Biaya Platform
+- **Tokopedia — SUMBER PRIMER.** PDF "Tokopedia non Mall Tarif - Mulai 20 Februari
+  2025", 3.779 baris tarif atas 43 kategori. Di-parse ke
+  `docs/tarif_tokopedia_nonmall.csv` oleh `scripts/parse_tarif_tokopedia.py`.
+  Tarif 10% berdiskon 20% jadi 8% efektif sejak 16 September 2024. Fee cap dan
+  biaya proses TIDAK ada di PDF ini — keduanya belum terverifikasi.
+- **Shopee — sumber sekunder.** Tarif 2026 per kategori A–E, sama untuk Non-Star,
+  Star, dan Star+ (2,5%–10%); Mall 2,5%–11,7% plus payment fee 1,8%. Gratis Ongkir
+  XTRA 4–9%. Biaya proses Rp1.250/pesanan.
 - **Blibli:** Seller Regular 2025-2026. Elektronik 4,25%, Kuliner 5,75%, Home &
   Living 7,5-8%, Fashion hingga 10%.
 
