@@ -270,6 +270,12 @@ masukannya sama.
 (kata dari leksikon umum), `merek` (leksikon merek), `ukuran` (regex satuan),
 `kategori`.
 
+> **Angka di bagian ini adalah batas atas yang dipompa.** Fakta diekstrak dari
+> judul emas, jadi mengandaikan penjual mengetik jenis, merek, dan ukuran
+> dengan sempurna. Saat fakta harus datang dari bacaan foto seperti yang
+> dihadapi pipeline, template jatuh dari 0,352 ke **0,250** — lihat bagian
+> 9.4. Jangan kutip 0,352 sebagai pembanding langsung pipeline.
+
 ### Judul
 
 | metode | `inti_f1` | halusinasi | kata | latihan |
@@ -322,6 +328,40 @@ Template menyampaikan seluruh fakta produk; penjual sendiri hanya 71%.
 
 Latihan: nol detik. Tidak ada yang dilatih.
 
+### 9.4 Ablasi penulis — masukan penglihatan identik
+
+Perbandingan di atas tidak adil: template menerima fakta dari judul emas,
+pipeline harus membaca foto. Ablasi ini menyamakannya. Keduanya berangkat dari
+medan `vlm` yang sama persis — teks yang gemma3:4b hasilkan saat melihat foto,
+tersimpan di berkas hasil. Yang berbeda hanya langkah penulisan.
+
+| penulis | `inti_f1` | `kata_asing` | kata |
+|---|---:|---:|---:|
+| template (nol model, CPU) | 0,250 | 0,0% | 1,4 |
+| **qwen2.5:7b (pipeline)** | **0,405** | 85,4% | 6,1 |
+
+Selisih 0,155. Penulis LLM membayar ongkosnya.
+
+Sebabnya bacaan foto itu pendek — misalnya `"Minyak goreng SunCo"`. Template
+hanya bisa mengambil slot yang sudah ada di situ. Yang dilakukan qwen adalah
+menggabungkan bacaan foto dengan judul tetangga katalog menjadi judul lengkap;
+itu langkah sintesis, dan template tidak melakukannya. Pada 17 dari 492 produk
+(3,5%) template tidak mengisi satu slot pun dan tidak mengeluarkan apa-apa,
+sementara pipeline tetap menulis.
+
+Sejalan dengan bagian 7: pengenalan penting, tapi penulisan juga.
+
+**`kata_asing` 85,4% lawan 0,0% tidak boleh diadu tanpa penjelasan.** Metrik itu
+mengukur kata yang tidak muncul di bacaan foto, sementara pipeline memang
+sengaja meminjam kata dari tetangga katalog. Template mendapat 0% dengan cara
+sederhana: hampir tidak menulis apa pun.
+
+Batasan: "template" di sini tiga slot sederhana. Penulis tradisional yang lebih
+serius bisa melampaui 0,250. Yang terbukti adalah *ini* tidak cukup — bukan
+bahwa tidak ada yang bisa.
+
+Skrip: `scripts/uji_penulis.py`, tanpa GPU.
+
 ### Kebocoran yang sempat menyesatkan
 
 Pengukuran pertama memberi retrieval `inti_f1` **0,459** — di atas pipeline
@@ -349,10 +389,17 @@ angkanya jatuh ke 0,243.
 
 ### Artinya untuk klaim proyek
 
-Bukan pengganti pipeline — template tidak melihat foto, tidak menaksir harga,
-dan judulnya 1,9 kata. Tapi ini bukti kedua untuk tesis yang sama dengan bagian
-7: **verifikasi itu kode, bukan model.** Delapan baris aturan slot mengalahkan
-LoRA 0,5B yang dilatih atas 9.889 contoh, dengan halusinasi 0% dan tanpa GPU.
+Bukan pengganti pipeline, dan ablasi 9.4 menunjukkan jaraknya lebih lebar dari
+yang tampak mula-mula: pada masukan penglihatan yang sama, penulis LLM unggul
+0,155. Pemilihan teknologinya proporsional.
+
+Yang tetap berdiri: template mengalahkan LoRA 0,5B (0,352 lawan 0,208) **pada
+masukan teks yang sama-sama diturunkan dari judul emas**, dengan nol latihan.
+Artinya menyuling model kecil supaya bisa menulis dari fakta yang sudah bersih
+adalah ongkos yang tidak terbayar — bukan bahwa pipeline penuh tergantikan.
+
+Template tetap berguna sebagai jaring pengaman: nol halusinasi, < 0,01 ms, jalan
+tanpa GPU. Cocok sebagai keluaran cadangan saat model tidak tersedia.
 
 ---
 
@@ -374,6 +421,8 @@ LoRA 0,5B yang dilatih atas 9.889 contoh, dengan halusinasi 0% dan tanpa GPU.
 | ~~halusinasi merek 4× lebih jarang~~ | **gugur** | metriknya melewatkan 93% |
 | ~~spesifikasi hampir tak pernah dikarang~~ | **gugur** | metriknya menangkap 0% |
 | ~~deskripsi bebas kata asing~~ | **gugur** | metriknya melewatkan 91% |
+| penulis LLM proporsional, bukan overkill | **berdiri** | `inti_f1` 0,405 lawan template 0,250, penglihatan identik |
+| ~~template tradisional bisa menggantikan LLM~~ | **gugur** | 0,352 itu batas atas dipompa; jadi 0,250 dari foto |
 | kecepatan student | **tak sah** | tumpukan penyajian berbeda |
 
 Dua syarat yang wajib ikut disebut kalau klaim halusinasi dipakai:
@@ -416,4 +465,5 @@ Skrip yang menghasilkan bagian 9 (jalankan dari akar proyek, tanpa GPU):
 scripts/uji_tradisional.py                judul: template, bigram, retrieval
 scripts/uji_deskripsi.py                  deskripsi: template, tetangga
 scripts/uji_hibrida.py                    judul: template + suara tetangga
+scripts/uji_penulis.py                    ablasi penulis, penglihatan identik
 ```
